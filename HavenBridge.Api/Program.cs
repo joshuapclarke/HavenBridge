@@ -37,6 +37,10 @@ using (var scope = app.Services.CreateScope())
     {
         await CsvDataImporter.ImportAllAsync(db, seedFolder);
     }
+
+    // Hide future snapshots that have no real health/education data
+    await db.Database.ExecuteSqlRawAsync(
+        "UPDATE PUBLIC_IMPACT_SNAPSHOTS SET is_published = 0 WHERE snapshot_date >= '2026-03-01' AND is_published = 1");
 }
 
 if (app.Environment.IsDevelopment())
