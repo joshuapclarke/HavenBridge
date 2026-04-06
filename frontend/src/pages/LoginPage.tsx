@@ -25,12 +25,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         <div className="bg-white rounded-2xl shadow-lg border border-gray-200/80 p-8">
           <div className="flex flex-col items-center mb-8">
-            <div
-              className="h-14 w-14 rounded-xl bg-gradient-to-br from-haven-600 to-haven-800 flex items-center justify-center text-white text-2xl font-bold shadow-md mb-4"
-              aria-hidden
-            >
-              H
-            </div>
+            <img src="/favicon.svg" alt="HavenBridge" className="h-14 w-14 mb-4" />
             <h1 className="text-2xl font-bold text-gray-900">HavenBridge</h1>
             <p className="text-sm text-gray-500 mt-1">Staff Login</p>
           </div>

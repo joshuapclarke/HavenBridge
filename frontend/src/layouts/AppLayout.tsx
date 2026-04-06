@@ -31,9 +31,7 @@ export default function AppLayout() {
       <header className="bg-white border-b border-gray-200 sticky top-0 z-30">
         <div className="max-w-[1600px] mx-auto flex items-center h-16 px-6">
           <NavLink to="/dashboard" className="flex items-center gap-2.5 mr-10">
-            <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-haven-600 to-haven-800 flex items-center justify-center">
-              <span className="text-white font-bold text-lg">H</span>
-            </div>
+            <img src="/favicon.svg" alt="HavenBridge" className="h-9 w-9" />
             <span className="text-xl font-bold text-gray-900 tracking-tight">
               Haven<span className="text-haven-600">Bridge</span>
             </span>
