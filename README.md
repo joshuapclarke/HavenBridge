@@ -11,33 +11,53 @@ A nonprofit platform connecting case workers and donors to improve outcomes for 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download)
 - [Node.js 20+](https://nodejs.org/)
 
-### 1. Start the Backend
+### First-Time Setup
 
-```bash
-cd HavenBridge.Api
-dotnet run
+```powershell
+.\setup.ps1
 ```
 
-The API starts at **http://localhost:5149**. On first run, the SQLite database is auto-created and populated from 17 CSV seed files (~7,000 rows of real data).
+This checks prerequisites, restores .NET packages, and installs frontend dependencies.
 
-### 2. Start the Frontend
+### Start the App
 
-```bash
+```powershell
+.\start.ps1
+```
+
+Launches both the backend API and the frontend dev server in one command. The app opens at **http://localhost:5173**.
+
+### Other Scripts
+
+| Script | What it does |
+|--------|-------------|
+| `.\start.ps1` | Start both backend + frontend |
+| `.\reset-db.ps1` | Delete the local database so it re-seeds from CSVs on next start |
+| `.\setup.ps1` | First-time install of all dependencies |
+
+### Manual Start (if you prefer)
+
+```powershell
+# Terminal 1 — Backend API (http://localhost:5149)
+cd HavenBridge.Api
+dotnet run
+
+# Terminal 2 — Frontend (http://localhost:5173)
 cd frontend
-npm install
+npm install   # only needed first time
 npm run dev
 ```
 
-The app opens at **http://localhost:5173**. API calls are proxied to the backend automatically.
+On first run, the SQLite database is auto-created and populated from 17 CSV seed files (~7,000 rows of real data).
 
-### 3. Access the App
+### Access the App
 
 | URL | What it is |
 |-----|------------|
-| `/welcome` | Public landing page |
+| `/` or `/welcome` | Public landing page |
 | `/impact` | Public impact dashboard (no login) |
 | `/login` | Staff login (enter any email + password) |
-| `/` | Staff dashboard (requires login) |
+| `/dashboard` | Staff dashboard (requires login) |
 
 ---
 
@@ -129,7 +149,7 @@ HavenBridge/
 
 | Route | Page | Description |
 |-------|------|-------------|
-| `/` | Dashboard | Overview metrics, recent activity, quick actions |
+| `/dashboard` | Dashboard | Overview metrics, recent activity, quick actions |
 | `/cases` | Case Dashboard | Resident list with search/filter, detail panel with tabs (Sessions, Health, Education, Visits, Notes), alerts sidebar |
 | `/donors` | Donor Management | Summary cards, donor table, detail panel with giving history & impact |
 | `/reports` | Reports & Analytics | Safehouse comparison table, donor overview, alert summary |
