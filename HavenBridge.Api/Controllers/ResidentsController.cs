@@ -1,0 +1,82 @@
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using HavenBridge.Api.Data;
+using HavenBridge.Api.Models;
+
+namespace HavenBridge.Api.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class ResidentsController : ControllerBase
+{
+    private readonly HavenBridgeContext _db;
+    public ResidentsController(HavenBridgeContext db) => _db = db;
+
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<Resident>>> GetAll()
+    {
+        return await _db.Residents
+            .Include(r => r.Safehouse)
+            .OrderBy(r => r.CaseStatus == "Active" ? 0 : 1)
+            .ThenByDescending(r => r.DateOfAdmission)
+            .ToListAsync();
+    }
+
+    [HttpGet("{id}")]
+    public async Task<ActionResult<Resident>> Get(int id)
+    {
+        var resident = await _db.Residents
+            .Include(r => r.Safehouse)
+            .Include(r => r.ProcessRecordings.OrderByDescending(p => p.SessionDate))
+            .Include(r => r.InterventionPlans)
+            .Include(r => r.HomeVisitations.OrderByDescending(h => h.VisitDate))
+            .Include(r => r.HealthRecords.OrderByDescending(h => h.RecordDate))
+            .Include(r => r.EducationRecords.OrderByDescending(e => e.RecordDate))
+            .Include(r => r.IncidentReports.OrderByDescending(i => i.IncidentDate))
+            .FirstOrDefaultAsync(r => r.ResidentId == id);
+
+        return resident is null ? NotFound() : Ok(resident);
+    }
+
+    [HttpPost]
+    public async Task<ActionResult<Resident>> Create(Resident resident)
+    {
+        resident.CreatedAt = DateTime.UtcNow;
+        _db.Residents.Add(resident);
+        await _db.SaveChangesAsync();
+        return CreatedAtAction(nameof(Get), new { id = resident.ResidentId }, resident);
+    }
+
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(int id, Resident resident)
+    {
+        if (id != resident.ResidentId) return BadRequest();
+        _db.Entry(resident).State = EntityState.Modified;
+        await _db.SaveChangesAsync();
+        return NoContent();
+    }
+
+    [HttpGet("alerts")]
+    public async Task<ActionResult> GetAlerts()
+    {
+        var highRisk = await _db.Residents
+            .Where(r => r.CurrentRiskLevel == "High" && r.CaseStatus == "Active")
+            .Select(r => new { r.ResidentId, r.InternalCode, r.CurrentRiskLevel, r.AssignedSocialWorker, Type = "High Risk" })
+            .ToListAsync();
+
+        var flaggedSessions = await _db.ProcessRecordings
+            .Where(p => p.ConcernsFlagged)
+            .OrderByDescending(p => p.SessionDate)
+            .Take(10)
+            .Select(p => new { p.RecordingId, p.ResidentId, p.SessionDate, p.SessionType, Type = "Concern Flagged" })
+            .ToListAsync();
+
+        var unresolvedIncidents = await _db.IncidentReports
+            .Where(i => !i.Resolved)
+            .OrderByDescending(i => i.IncidentDate)
+            .Select(i => new { i.IncidentId, i.ResidentId, i.IncidentDate, i.Severity, i.IncidentType, Type = "Unresolved Incident" })
+            .ToListAsync();
+
+        return Ok(new { highRisk, flaggedSessions, unresolvedIncidents });
+    }
+}

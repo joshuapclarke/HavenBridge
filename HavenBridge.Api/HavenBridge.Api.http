@@ -1,0 +1,6 @@
+@HavenBridge.Api_HostAddress = http://localhost:5149
+
+GET {{HavenBridge.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
