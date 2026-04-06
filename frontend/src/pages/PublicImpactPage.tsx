@@ -55,11 +55,13 @@ export default function PublicImpactPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-haven-50 via-white to-gray-50">
-      <header className="border-b border-haven-100 bg-white/90 backdrop-blur-sm">
-        <div className="mx-auto max-w-5xl px-6 py-8">
+      {/* Header */}
+      <header className="relative overflow-hidden border-b border-haven-100/60">
+        <div className="absolute inset-0 bg-gradient-to-br from-haven-600/5 to-transparent" />
+        <div className="relative mx-auto max-w-5xl px-6 py-10 sm:py-14">
           <Link
             to="/welcome"
-            className="inline-flex items-center gap-2 text-sm font-medium text-haven-700 hover:text-haven-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-haven-500 focus-visible:ring-offset-2 rounded-md"
+            className="inline-flex items-center gap-2 text-sm font-medium text-haven-700 hover:text-haven-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-haven-500 focus-visible:ring-offset-2 rounded-md transition-colors"
           >
             <ArrowLeftIcon className="h-4 w-4" aria-hidden />
             Back to home
@@ -67,24 +69,24 @@ export default function PublicImpactPage() {
           <h1 className="mt-6 text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight">
             Our Impact
           </h1>
-          <p className="mt-3 max-w-2xl text-gray-600 leading-relaxed">
+          <p className="mt-3 max-w-2xl text-gray-600 leading-relaxed text-base">
             Aggregated, anonymized numbers and published updates from HavenBridge.
             Individual children are never identified here.
           </p>
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-6 py-10 sm:py-12">
+      <main className="mx-auto max-w-5xl px-6 py-12 sm:py-16">
         {!overview && (
           <p
-            className="mb-10 rounded-lg bg-amber-50 border border-amber-100 text-amber-900 px-4 py-3 text-sm"
+            className="mb-10 rounded-2xl bg-amber-50 border border-amber-100 text-amber-900 px-5 py-4 text-sm"
             role="status"
           >
             Summary numbers are temporarily unavailable. Published updates below may still load.
           </p>
         )}
         {overview && (
-          <section className="mb-14" aria-labelledby="summary-heading">
+          <section className="mb-16" aria-labelledby="summary-heading">
             <h2 id="summary-heading" className="sr-only">
               Summary statistics
             </h2>
@@ -118,23 +120,23 @@ export default function PublicImpactPage() {
         )}
 
         <section aria-labelledby="snapshots-heading">
-          <h2 id="snapshots-heading" className="text-xl font-semibold text-gray-900 mb-2">
+          <h2 id="snapshots-heading" className="text-2xl font-bold text-gray-900 tracking-tight mb-2">
             Published impact updates
           </h2>
-          <p className="text-gray-600 text-sm mb-8 max-w-2xl">
+          <p className="text-gray-600 text-sm mb-10 max-w-2xl leading-relaxed">
             Periodic snapshots our team shares with the public. All figures respect privacy and
             combine data across programs.
           </p>
 
           {snapshots.length === 0 ? (
-            <p className="rounded-xl border border-dashed border-gray-200 bg-white px-6 py-12 text-center text-gray-500">
+            <p className="rounded-2xl border border-dashed border-gray-200 bg-white px-6 py-16 text-center text-gray-500">
               No published impact stories yet. Please check back soon.
             </p>
           ) : (
             <ul className="space-y-6 list-none p-0 m-0">
               {snapshots.map((snap) => (
                 <li key={snap.snapshotId}>
-                  <article className="rounded-xl border border-gray-100 bg-white p-6 sm:p-8 shadow-sm hover:shadow-md transition-shadow">
+                  <article className="rounded-2xl border border-gray-100 bg-white p-6 sm:p-8 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all">
                     <div className="flex flex-wrap items-center gap-2 text-sm text-gray-500 mb-3">
                       <CalendarDaysIcon className="h-4 w-4 text-haven-500 shrink-0" aria-hidden />
                       <time dateTime={snap.snapshotDate}>
@@ -161,7 +163,7 @@ export default function PublicImpactPage() {
         </section>
       </main>
 
-      <footer className="border-t border-gray-100 py-8 text-center text-sm text-gray-500">
+      <footer className="border-t border-gray-100 py-10 text-center text-sm text-gray-500">
         <p className="font-medium text-gray-700">HavenBridge</p>
       </footer>
     </div>

@@ -27,8 +27,8 @@ export default function AppLayout() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-30">
+    <div className="min-h-screen flex flex-col bg-gray-50/60">
+      <header className="bg-white/80 backdrop-blur-md border-b border-gray-200/70 sticky top-0 z-30 shadow-sm">
         <div className="max-w-[1600px] mx-auto flex items-center h-16 px-6">
           <NavLink to="/dashboard" className="flex items-center gap-2.5 mr-10">
             <img src="/favicon.svg" alt="HavenBridge" className="h-9 w-9" />
@@ -44,10 +44,10 @@ export default function AppLayout() {
                 to={to}
                 end={to === '/dashboard'}
                 className={({ isActive }) =>
-                  `flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  `flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                     isActive
-                      ? 'bg-haven-50 text-haven-700'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                      ? 'bg-haven-50 text-haven-700 shadow-sm'
+                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                   }`
                 }
               >
@@ -60,7 +60,7 @@ export default function AppLayout() {
           <div className="ml-auto">
             <button
               onClick={handleLogout}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-500 hover:bg-red-50 hover:text-red-600 transition-all"
             >
               <ArrowRightStartOnRectangleIcon className="h-5 w-5" />
               Sign Out
@@ -69,7 +69,6 @@ export default function AppLayout() {
         </div>
       </header>
 
-      {/* Page Content */}
       <main className="flex-1">
         <Outlet />
       </main>
