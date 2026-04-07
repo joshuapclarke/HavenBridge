@@ -20,3 +20,5 @@ frontend/dist/
 # OS
 Thumbs.db
 .DS_Store
+
+*/publish
