@@ -74,26 +74,6 @@ using (var scope = app.Services.CreateScope())
 
     await db.Database.ExecuteSqlRawAsync(
         "UPDATE PUBLIC_IMPACT_SNAPSHOTS SET is_published = 0 WHERE snapshot_date >= '2026-03-01' AND is_published = 1");
-
-    var defaultHash = BCrypt.Net.BCrypt.HashPassword("password123");
-    var usersToFix = db.Users.AsEnumerable()
-        .Where(u =>
-        {
-            if (string.IsNullOrWhiteSpace(u.PasswordHash)) return true;
-            try { BCrypt.Net.BCrypt.Verify("test", u.PasswordHash); return false; }
-            catch { return true; }
-        })
-        .ToList();
-
-    if (usersToFix.Count > 0)
-    {
-        foreach (var u in usersToFix)
-        {
-            u.PasswordHash = defaultHash;
-            u.NeedPasswordReset = true;
-        }
-        await db.SaveChangesAsync();
-    }
 }
 
 if (app.Environment.IsDevelopment())
