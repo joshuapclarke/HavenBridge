@@ -11,11 +11,24 @@ import AdminPortalPage from './pages/AdminPortalPage';
 import DonorPortalPage from './pages/DonorPortalPage';
 import ReportsPage from './pages/ReportsPage';
 import CookieConsent from './components/CookieConsent';
+import RegisterPage from './pages/RegisterPage';
 import { ResidentIntakePage } from './pages/ResidentIntakePage';
+import { isAuthenticated, hasRole } from './services/auth';
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
-  const isAuth = localStorage.getItem('hb_auth') === 'staff';
-  return isAuth ? <>{children}</> : <Navigate to="/login" replace />;
+  return isAuthenticated() ? <>{children}</> : <Navigate to="/login" replace />;
+}
+
+function RequireStaff({ children }: { children: React.ReactNode }) {
+  if (!isAuthenticated()) return <Navigate to="/login" replace />;
+  if (!hasRole('Staff')) return <Navigate to="/donor-portal" replace />;
+  return <>{children}</>;
+}
+
+function RequireAdmin({ children }: { children: React.ReactNode }) {
+  if (!isAuthenticated()) return <Navigate to="/login" replace />;
+  if (!hasRole('Admin')) return <Navigate to="/dashboard" replace />;
+  return <>{children}</>;
 }
 
 export default function App() {
@@ -28,16 +41,20 @@ export default function App() {
         <Route path="/impact" element={<PublicImpactPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/privacy" element={<PrivacyPolicyPage />} />
+        <Route path="/register" element={<RegisterPage />} />
 
-        {/* Protected staff routes */}
         <Route element={<RequireAuth><AppLayout /></RequireAuth>}>
-          <Route path="dashboard" element={<DashboardPage />} />
-          <Route path="cases" element={<CaseDashboardPage />} />
-          <Route path="donors" element={<DonorManagementPage />} />
-          <Route path="reports" element={<ReportsPage />} />
-          <Route path="admin" element={<AdminPortalPage />} />
           <Route path="donor-portal" element={<DonorPortalPage />} />
-          <Route path="/cases/new" element={<ResidentIntakePage />} />
+
+          {/* Protected staff routes */}
+          <Route path="dashboard" element={<RequireStaff><DashboardPage /></RequireStaff>} />
+          <Route path="cases" element={<RequireStaff><CaseDashboardPage /></RequireStaff>} />
+          <Route path="donors" element={<RequireStaff><DonorManagementPage /></RequireStaff>} />
+          <Route path="reports" element={<RequireStaff><ReportsPage /></RequireStaff>} />
+          <Route path="/cases/new" element={<RequireStaff><ResidentIntakePage /></RequireStaff>} />
+
+          {/* Admin-only route */}
+          <Route path="admin" element={<RequireAdmin><AdminPortalPage /></RequireAdmin>} />
         </Route>
       </Routes>
       <CookieConsent />
