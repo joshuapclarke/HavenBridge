@@ -40,7 +40,11 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-var allowedOrigins = new List<string> { "http://localhost:5173" };
+var allowedOrigins = new List<string>
+{
+    "http://localhost:5173",
+    "https://icy-wave-0fc91c01e2.azurestaticapps.net"
+};
 var azureOrigin = Environment.GetEnvironmentVariable("AZURE_FRONTEND_URL");
 if (!string.IsNullOrWhiteSpace(azureOrigin))
     allowedOrigins.Add(azureOrigin);
