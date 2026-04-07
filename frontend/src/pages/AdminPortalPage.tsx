@@ -40,7 +40,7 @@ export default function AdminPortalPage() {
   const [searchResults, setSearchResults] = useState<SearchResults | null>(null);
 
   const [users, setUsers] = useState<ManagedUser[]>([]);
-  const [usersLoading, setUsersLoading] = useState(false);
+  const [usersLoading] = useState(false);
   const [roleUpdating, setRoleUpdating] = useState<number | null>(null);
   const [resetUpdating, setResetUpdating] = useState<number | null>(null);
 

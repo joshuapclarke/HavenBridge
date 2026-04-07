@@ -12,8 +12,6 @@ import {
   BuildingOfficeIcon,
   ArrowRightIcon,
   UserPlusIcon,
-  ChatBubbleLeftEllipsisIcon,
-  HomeModernIcon,
   ClipboardDocumentListIcon,
   CalendarDaysIcon,
 } from '@heroicons/react/24/outline';

@@ -182,8 +182,8 @@ export default function ReportsPage() {
               <BarChart data={donationTimeline} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                 <XAxis dataKey="label" tick={{ fontSize: 11 }} interval="preserveStartEnd" />
-                <YAxis tick={{ fontSize: 11 }} tickFormatter={v => `$${(v / 1000).toFixed(0)}k`} />
-                <Tooltip formatter={(v: number) => [`$${v.toLocaleString()}`, 'Amount']} />
+                <YAxis tick={{ fontSize: 11 }} tickFormatter={(v: number) => `$${(v / 1000).toFixed(0)}k`} />
+                <Tooltip formatter={(value: any) => [`$${Number(value).toLocaleString()}`, 'Amount']} />
                 <Bar dataKey="amount" fill="#4f6d7a" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
@@ -221,7 +221,7 @@ export default function ReportsPage() {
           {riskData.length > 0 ? (
             <ResponsiveContainer width="100%" height={240}>
               <PieChart>
-                <Pie data={riskData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={50} outerRadius={90} paddingAngle={3} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} style={{ fontSize: 11 }}>
+                <Pie data={riskData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={50} outerRadius={90} paddingAngle={3} label={({ name, percent }: any) => `${name} ${(percent * 100).toFixed(0)}%`} style={{ fontSize: 11 }}>
                   {riskData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
                 </Pie>
                 <Tooltip />
@@ -238,7 +238,7 @@ export default function ReportsPage() {
           {categoryData.length > 0 ? (
             <ResponsiveContainer width="100%" height={240}>
               <PieChart>
-                <Pie data={categoryData} dataKey="count" nameKey="category" cx="50%" cy="50%" outerRadius={90} paddingAngle={2} label={({ category, percent }) => `${category} ${(percent * 100).toFixed(0)}%`} style={{ fontSize: 11 }}>
+                <Pie data={categoryData} dataKey="count" nameKey="category" cx="50%" cy="50%" outerRadius={90} paddingAngle={2} label={({ name, percent }: any) => `${name} ${(percent * 100).toFixed(0)}%`} style={{ fontSize: 11 }}>
                   {categoryData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
                 </Pie>
                 <Tooltip />
@@ -276,7 +276,7 @@ export default function ReportsPage() {
           {educationData.length > 0 ? (
             <ResponsiveContainer width="100%" height={240}>
               <PieChart>
-                <Pie data={educationData} dataKey="count" nameKey="status" cx="50%" cy="50%" outerRadius={90} paddingAngle={2} label={({ status, percent }) => `${status} ${(percent * 100).toFixed(0)}%`} style={{ fontSize: 11 }}>
+                <Pie data={educationData} dataKey="count" nameKey="status" cx="50%" cy="50%" outerRadius={90} paddingAngle={2} label={({ name, percent }: any) => `${name} ${(percent * 100).toFixed(0)}%`} style={{ fontSize: 11 }}>
                   {educationData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
                 </Pie>
                 <Tooltip />
@@ -314,7 +314,7 @@ export default function ReportsPage() {
           {reintegrationData.length > 0 ? (
             <ResponsiveContainer width="100%" height={240}>
               <PieChart>
-                <Pie data={reintegrationData} dataKey="count" nameKey="status" cx="50%" cy="50%" innerRadius={50} outerRadius={90} paddingAngle={3} label={({ status, percent }) => `${status} ${(percent * 100).toFixed(0)}%`} style={{ fontSize: 11 }}>
+                <Pie data={reintegrationData} dataKey="count" nameKey="status" cx="50%" cy="50%" innerRadius={50} outerRadius={90} paddingAngle={3} label={({ name, percent }: any) => `${name} ${(percent * 100).toFixed(0)}%`} style={{ fontSize: 11 }}>
                   {reintegrationData.map((entry, i) => <Cell key={i} fill={REINTEGRATION_COLORS[entry.status] ?? PIE_COLORS[i % PIE_COLORS.length]} />)}
                 </Pie>
                 <Tooltip />
