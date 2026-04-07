@@ -75,6 +75,6 @@ export const api = {
       request<any>(`/admin/users/${userId}/require-password-reset`, { method: 'PUT', body: JSON.stringify({ needPasswordReset }) }),
   },
   users: {
-  list: () => request<User[]>('/users'), 
+    list: () => request<User[]>('/users'), 
   },
 };

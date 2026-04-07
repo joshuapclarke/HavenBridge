@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../services/api';
+import { Link } from 'react-router-dom';
 import LoadingSpinner from '../components/LoadingSpinner';
 import type { RecentActivity } from '../types/models';
 import {
@@ -102,10 +103,10 @@ export default function AdminPortalPage() {
   if (loading) return <LoadingSpinner />;
 
   const actions = [
-    { label: 'Add New Resident', icon: UserPlusIcon, gradient: 'from-haven-600 to-haven-700' },
-    { label: 'Log Session', icon: ChatBubbleLeftEllipsisIcon, gradient: 'from-warm-500 to-warm-600' },
-    { label: 'Record Home Visit', icon: HomeModernIcon, gradient: 'from-emerald-600 to-emerald-700' },
-    { label: 'Add Donor', icon: HeartIcon, gradient: 'from-violet-600 to-violet-700' },
+    { label: 'Add New Resident', icon: UserPlusIcon, gradient: 'from-haven-600 to-haven-700', to: '/cases/new' },
+    { label: 'Log Session', icon: ChatBubbleLeftEllipsisIcon, gradient: 'from-warm-500 to-warm-600', to: '#' },
+    { label: 'Record Home Visit', icon: HomeModernIcon, gradient: 'from-emerald-600 to-emerald-700', to: '#' },
+    { label: 'Add Donor', icon: HeartIcon, gradient: 'from-violet-600 to-violet-700', to: '#' },
   ];
 
   return (
@@ -184,15 +185,16 @@ export default function AdminPortalPage() {
           {/* Action Buttons */}
           <div className="grid grid-cols-2 gap-5 mb-12">
             {actions.map(a => (
-              <button
+              <Link
                 key={a.label}
+                to={a.to}
                 className={`group bg-gradient-to-br ${a.gradient} text-white rounded-2xl p-6 flex flex-col items-center gap-3 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all`}
               >
                 <a.icon className="h-10 w-10 opacity-90 group-hover:opacity-100 transition-opacity" />
                 <span className="text-lg font-semibold">{a.label}</span>
-              </button>
+              </Link>
             ))}
-          </div>
+            </div>
 
           {/* Recent Activity Feed */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
