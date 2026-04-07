@@ -40,9 +40,29 @@ public class AuthController : ControllerBase
         if (exists)
             return Conflict(new { message = "Username is already taken." });
 
+        var displayName = string.Join(" ",
+            new[] { req.FirstName, req.LastName }.Where(s => !string.IsNullOrWhiteSpace(s)));
+        if (string.IsNullOrWhiteSpace(displayName))
+            displayName = req.Username;
+
+        var supporter = new Supporter
+        {
+            SupporterType = "Individual",
+            DisplayName = displayName,
+            FirstName = req.FirstName,
+            LastName = req.LastName,
+            Status = "Active",
+            AcquisitionChannel = "Self-Registration",
+            FirstDonationDate = null,
+            CreatedAt = DateTime.UtcNow
+        };
+        _db.Supporters.Add(supporter);
+        await _db.SaveChangesAsync();
+
         var user = new User
         {
-            RoleId = 3, // Donor
+            RoleId = 3,
+            SupporterId = supporter.SupporterId,
             Username = req.Username,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(req.Password),
             UserFirstName = req.FirstName,
@@ -59,7 +79,7 @@ public class AuthController : ControllerBase
         return Ok(new
         {
             token,
-            user = new { user.UserId, user.Username, user.UserFirstName, user.UserLastName, role = role.Description }
+            user = new { user.UserId, user.Username, user.UserFirstName, user.UserLastName, role = role.Description, user.SupporterId }
         });
     }
 
@@ -76,7 +96,7 @@ public class AuthController : ControllerBase
         {
             token,
             needPasswordReset = user.NeedPasswordReset,
-            user = new { user.UserId, user.Username, user.UserFirstName, user.UserLastName, role = user.Role.Description }
+            user = new { user.UserId, user.Username, user.UserFirstName, user.UserLastName, role = user.Role.Description, user.SupporterId }
         });
     }
 
@@ -119,7 +139,8 @@ public class AuthController : ControllerBase
             user.Username,
             user.UserFirstName,
             user.UserLastName,
-            role = user.Role!.Description
+            role = user.Role!.Description,
+            user.SupporterId
         });
     }
 
@@ -128,12 +149,15 @@ public class AuthController : ControllerBase
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-        var claims = new[]
+        var claims = new List<Claim>
         {
             new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
             new Claim(ClaimTypes.Name, user.Username),
             new Claim(ClaimTypes.Role, role)
         };
+
+        if (user.SupporterId.HasValue)
+            claims.Add(new Claim("supporterId", user.SupporterId.Value.ToString()));
 
         var token = new JwtSecurityToken(
             issuer: _config["Jwt:Issuer"],

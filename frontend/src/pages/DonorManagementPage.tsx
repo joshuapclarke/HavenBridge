@@ -11,6 +11,7 @@ import {
   ExclamationCircleIcon,
   BanknotesIcon,
   PlusIcon,
+  PencilSquareIcon,
 } from '@heroicons/react/24/outline';
 
 export default function DonorManagementPage() {
@@ -20,6 +21,10 @@ export default function DonorManagementPage() {
   const [impact, setImpact] = useState<DonorImpact | null>(null);
   const [loading, setLoading] = useState(true);
   const [showDonationForm, setShowDonationForm] = useState(false);
+  const [showNewSupporterForm, setShowNewSupporterForm] = useState(false);
+  const [showEditSupporterForm, setShowEditSupporterForm] = useState(false);
+  const [editSupporterForm, setEditSupporterForm] = useState<Record<string, any>>({});
+  const [newSupporter, setNewSupporter] = useState({ supporterType: 'Individual', firstName: '', lastName: '', displayName: '', organizationName: '', email: '', phone: '', country: 'Philippines', region: '', acquisitionChannel: 'Direct' });
   const [donationForm, setDonationForm] = useState({ donationType: 'Monetary', amount: 0, campaignName: '', currencyCode: 'PHP', isRecurring: false });
 
   const handleAddDonation = async () => {
@@ -36,6 +41,50 @@ export default function DonorManagementPage() {
     setImpact(imp);
     setShowDonationForm(false);
     setDonationForm({ donationType: 'Monetary', amount: 0, campaignName: '', currencyCode: 'PHP', isRecurring: false });
+  };
+
+  const handleCreateSupporter = async () => {
+    const name = newSupporter.supporterType === 'Organization'
+      ? newSupporter.organizationName
+      : `${newSupporter.firstName} ${newSupporter.lastName}`.trim();
+    if (!name) return;
+    const payload = { ...newSupporter, displayName: name, status: 'Active' };
+    const created = await api.supporters.create(payload);
+    setSupporters(prev => [created, ...prev]);
+    const sum = await api.supporters.summary();
+    setSummary(sum);
+    setShowNewSupporterForm(false);
+    setNewSupporter({ supporterType: 'Individual', firstName: '', lastName: '', displayName: '', organizationName: '', email: '', phone: '', country: 'Philippines', region: '', acquisitionChannel: 'Direct' });
+  };
+
+  const openEditSupporter = () => {
+    if (!selected) return;
+    setEditSupporterForm({
+      displayName: selected.displayName ?? '',
+      email: selected.email ?? '',
+      phone: selected.phone ?? '',
+      country: selected.country ?? '',
+      region: selected.region ?? '',
+      acquisitionChannel: selected.acquisitionChannel ?? '',
+    });
+    setShowEditSupporterForm(true);
+  };
+
+  const handleEditSupporter = async () => {
+    if (!selected) return;
+    const updated = await api.supporters.update(selected.supporterId, editSupporterForm);
+    setSelected(updated);
+    setSupporters(prev => prev.map(s => s.supporterId === selected.supporterId ? { ...s, ...editSupporterForm } : s));
+    setShowEditSupporterForm(false);
+  };
+
+  const handleFlagAtRisk = async () => {
+    if (!selected) return;
+    const updated = await api.supporters.flagAtRisk(selected.supporterId);
+    setSelected({ ...selected, status: updated.status });
+    setSupporters(prev => prev.map(s => s.supporterId === selected.supporterId ? { ...s, status: updated.status } : s));
+    const sum = await api.supporters.summary();
+    setSummary(sum);
   };
 
   useEffect(() => {
@@ -63,9 +112,14 @@ export default function DonorManagementPage() {
   return (
     <div className="max-w-[1600px] mx-auto px-6 py-10">
       {/* Header */}
-      <div className="mb-10">
-        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Donor Management</h1>
-        <p className="text-gray-500 mt-2 text-base">Track and manage all donors and their giving history.</p>
+      <div className="mb-10 flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Donor Management</h1>
+          <p className="text-gray-500 mt-2 text-base">Track and manage all donors and their giving history.</p>
+        </div>
+        <button onClick={() => setShowNewSupporterForm(true)} className="flex items-center gap-1.5 px-5 py-2.5 bg-haven-600 text-white text-sm font-semibold rounded-xl hover:bg-haven-700 transition-all shadow-sm hover:shadow-md">
+          <PlusIcon className="h-5 w-5" /> New Supporter
+        </button>
       </div>
 
       {/* Summary Cards */}
@@ -188,10 +242,20 @@ export default function DonorManagementPage() {
                 <button onClick={() => setShowDonationForm(true)} className="flex-1 flex items-center justify-center gap-1.5 bg-haven-600 text-white text-sm font-medium py-2.5 rounded-xl hover:bg-haven-700 transition-all shadow-sm hover:shadow-md">
                   <PlusIcon className="h-4 w-4" /> Add Donation
                 </button>
-                <button className="flex-1 border border-red-200 text-red-700 text-sm font-medium py-2.5 rounded-xl hover:bg-red-50 transition-all">
-                  Flag At-Risk
+                <button onClick={openEditSupporter} className="flex items-center justify-center gap-1.5 border border-gray-200 text-gray-700 text-sm font-medium py-2.5 px-4 rounded-xl hover:bg-gray-50 transition-all">
+                  <PencilSquareIcon className="h-4 w-4" /> Edit
                 </button>
               </div>
+              <button
+                onClick={handleFlagAtRisk}
+                className={`w-full text-sm font-medium py-2.5 rounded-xl transition-all ${
+                  selected.status === 'At-Risk'
+                    ? 'border border-emerald-200 text-emerald-700 hover:bg-emerald-50'
+                    : 'border border-red-200 text-red-700 hover:bg-red-50'
+                }`}
+              >
+                {selected.status === 'At-Risk' ? 'Remove At-Risk Flag' : 'Flag At-Risk'}
+              </button>
             </div>
           )}
         </aside>
@@ -228,6 +292,99 @@ export default function DonorManagementPage() {
           <div className="flex justify-end gap-3 pt-2">
             <button onClick={() => setShowDonationForm(false)} className="px-4 py-2.5 text-sm font-medium text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all">Cancel</button>
             <button onClick={handleAddDonation} className="px-4 py-2.5 text-sm font-medium text-white bg-haven-600 rounded-xl hover:bg-haven-700 transition-all shadow-sm">Save Donation</button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal open={showEditSupporterForm} onClose={() => setShowEditSupporterForm(false)} title="Edit Supporter">
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Display Name</label>
+            <input value={editSupporterForm.displayName ?? ''} onChange={e => setEditSupporterForm(f => ({ ...f, displayName: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-haven-500/20 focus:border-haven-500 outline-none transition-all" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
+            <input type="email" value={editSupporterForm.email ?? ''} onChange={e => setEditSupporterForm(f => ({ ...f, email: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-haven-500/20 focus:border-haven-500 outline-none transition-all" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Phone</label>
+            <input type="tel" value={editSupporterForm.phone ?? ''} onChange={e => setEditSupporterForm(f => ({ ...f, phone: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-haven-500/20 focus:border-haven-500 outline-none transition-all" />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Country</label>
+              <input value={editSupporterForm.country ?? ''} onChange={e => setEditSupporterForm(f => ({ ...f, country: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-haven-500/20 focus:border-haven-500 outline-none transition-all" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Region</label>
+              <input value={editSupporterForm.region ?? ''} onChange={e => setEditSupporterForm(f => ({ ...f, region: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-haven-500/20 focus:border-haven-500 outline-none transition-all" />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Acquisition Channel</label>
+            <select value={editSupporterForm.acquisitionChannel ?? ''} onChange={e => setEditSupporterForm(f => ({ ...f, acquisitionChannel: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-haven-500/20 focus:border-haven-500 outline-none transition-all">
+              <option>Direct</option><option>Social Media</option><option>Referral</option><option>Event</option><option>Website</option><option>Church Partner</option><option>Corporate</option>
+            </select>
+          </div>
+          <div className="flex justify-end gap-3 pt-2">
+            <button onClick={() => setShowEditSupporterForm(false)} className="px-4 py-2.5 text-sm font-medium text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all">Cancel</button>
+            <button onClick={handleEditSupporter} className="px-4 py-2.5 text-sm font-medium text-white bg-haven-600 rounded-xl hover:bg-haven-700 transition-all shadow-sm">Save Changes</button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal open={showNewSupporterForm} onClose={() => setShowNewSupporterForm(false)} title="New Supporter">
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Supporter Type</label>
+            <select value={newSupporter.supporterType} onChange={e => setNewSupporter(f => ({ ...f, supporterType: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-haven-500/20 focus:border-haven-500 outline-none transition-all">
+              <option>Individual</option><option>Organization</option><option>Church</option><option>Foundation</option>
+            </select>
+          </div>
+          {newSupporter.supporterType === 'Organization' || newSupporter.supporterType === 'Church' || newSupporter.supporterType === 'Foundation' ? (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Organization Name</label>
+              <input value={newSupporter.organizationName} onChange={e => setNewSupporter(f => ({ ...f, organizationName: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-haven-500/20 focus:border-haven-500 outline-none transition-all" placeholder="Organization name" />
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">First Name</label>
+                <input value={newSupporter.firstName} onChange={e => setNewSupporter(f => ({ ...f, firstName: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-haven-500/20 focus:border-haven-500 outline-none transition-all" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Last Name</label>
+                <input value={newSupporter.lastName} onChange={e => setNewSupporter(f => ({ ...f, lastName: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-haven-500/20 focus:border-haven-500 outline-none transition-all" />
+              </div>
+            </div>
+          )}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
+            <input type="email" value={newSupporter.email} onChange={e => setNewSupporter(f => ({ ...f, email: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-haven-500/20 focus:border-haven-500 outline-none transition-all" placeholder="email@example.com" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Phone</label>
+            <input type="tel" value={newSupporter.phone} onChange={e => setNewSupporter(f => ({ ...f, phone: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-haven-500/20 focus:border-haven-500 outline-none transition-all" placeholder="+63 ..." />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Country</label>
+              <input value={newSupporter.country} onChange={e => setNewSupporter(f => ({ ...f, country: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-haven-500/20 focus:border-haven-500 outline-none transition-all" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Region</label>
+              <input value={newSupporter.region} onChange={e => setNewSupporter(f => ({ ...f, region: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-haven-500/20 focus:border-haven-500 outline-none transition-all" placeholder="e.g. NCR, Visayas" />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Acquisition Channel</label>
+            <select value={newSupporter.acquisitionChannel} onChange={e => setNewSupporter(f => ({ ...f, acquisitionChannel: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-haven-500/20 focus:border-haven-500 outline-none transition-all">
+              <option>Direct</option><option>Social Media</option><option>Referral</option><option>Event</option><option>Website</option><option>Church Partner</option><option>Corporate</option>
+            </select>
+          </div>
+          <div className="flex justify-end gap-3 pt-2">
+            <button onClick={() => setShowNewSupporterForm(false)} className="px-4 py-2.5 text-sm font-medium text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all">Cancel</button>
+            <button onClick={handleCreateSupporter} className="px-4 py-2.5 text-sm font-medium text-white bg-haven-600 rounded-xl hover:bg-haven-700 transition-all shadow-sm">Create Supporter</button>
           </div>
         </div>
       </Modal>

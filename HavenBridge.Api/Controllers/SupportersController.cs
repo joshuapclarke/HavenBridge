@@ -44,12 +44,45 @@ public class SupportersController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, Supporter supporter)
+    public async Task<IActionResult> Update(int id, [FromBody] Dictionary<string, object?> updates)
     {
-        if (id != supporter.SupporterId) return BadRequest();
-        _db.Entry(supporter).State = EntityState.Modified;
+        var existing = await _db.Supporters.FindAsync(id);
+        if (existing is null) return NotFound();
+
+        var type = typeof(Supporter);
+        foreach (var (key, value) in updates)
+        {
+            var prop = type.GetProperties()
+                .FirstOrDefault(p => string.Equals(p.Name, key, StringComparison.OrdinalIgnoreCase));
+            if (prop == null || !prop.CanWrite) continue;
+
+            object? converted = value;
+            if (value is System.Text.Json.JsonElement je)
+            {
+                if (prop.PropertyType == typeof(string) || prop.PropertyType == typeof(string))
+                    converted = je.GetString();
+                else if (prop.PropertyType == typeof(int) || prop.PropertyType == typeof(int?))
+                    converted = je.TryGetInt32(out var i) ? i : null;
+                else if (prop.PropertyType == typeof(bool))
+                    converted = je.GetBoolean();
+                else
+                    converted = je.ToString();
+            }
+            prop.SetValue(existing, converted);
+        }
+
         await _db.SaveChangesAsync();
-        return NoContent();
+        return Ok(existing);
+    }
+
+    [HttpPut("{id}/flag-at-risk")]
+    public async Task<IActionResult> FlagAtRisk(int id)
+    {
+        var supporter = await _db.Supporters.FindAsync(id);
+        if (supporter is null) return NotFound();
+        supporter.Status = supporter.Status == "At-Risk" ? "Active" : "At-Risk";
+        await _db.SaveChangesAsync();
+        return Ok(supporter);
     }
 
     [HttpGet("summary")]

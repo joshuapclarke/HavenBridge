@@ -50,10 +50,38 @@ public class ResidentsController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, Resident resident)
+    public async Task<IActionResult> Update(int id, [FromBody] Dictionary<string, object?> updates)
     {
-        if (id != resident.ResidentId) return BadRequest();
-        _db.Entry(resident).State = EntityState.Modified;
+        var existing = await _db.Residents.FindAsync(id);
+        if (existing is null) return NotFound();
+
+        var props = typeof(Resident).GetProperties()
+            .Where(p => p.CanWrite)
+            .ToDictionary(p => p.Name, p => p, StringComparer.OrdinalIgnoreCase);
+
+        foreach (var kv in updates)
+        {
+            if (!props.TryGetValue(kv.Key, out var prop) || kv.Key.Equals("ResidentId", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            if (kv.Value is null)
+            {
+                prop.SetValue(existing, null);
+                continue;
+            }
+
+            var target = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
+            if (kv.Value is System.Text.Json.JsonElement je)
+            {
+                var converted = System.Text.Json.JsonSerializer.Deserialize(je.GetRawText(), target);
+                prop.SetValue(existing, converted);
+            }
+            else
+            {
+                prop.SetValue(existing, Convert.ChangeType(kv.Value, target));
+            }
+        }
+
         await _db.SaveChangesAsync();
         return NoContent();
     }

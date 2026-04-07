@@ -36,12 +36,15 @@ export const api = {
     list: () => request<any[]>('/residents'),
     get: (id: number) => request<any>(`/residents/${id}`),
     create: (data: any) => request<any>('/residents', { method: 'POST', body: JSON.stringify(data) }),
+    update: (id: number, data: any) => request<any>(`/residents/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     alerts: () => request<any>('/residents/alerts'),
   },
   supporters: {
     list: () => request<any[]>('/supporters'),
     get: (id: number) => request<any>(`/supporters/${id}`),
     create: (data: any) => request<any>('/supporters', { method: 'POST', body: JSON.stringify(data) }),
+    update: (id: number, data: any) => request<any>(`/supporters/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    flagAtRisk: (id: number) => request<any>(`/supporters/${id}/flag-at-risk`, { method: 'PUT' }),
     summary: () => request<any>('/supporters/summary'),
   },
   safehouses: {
@@ -64,6 +67,11 @@ export const api = {
     snapshots: () => request<any[]>('/impact/snapshots'),
     donorImpact: (id: number) => request<any>(`/impact/donor/${id}`),
     overview: () => request<any>('/impact/overview'),
+  },
+  reports: {
+    charts: () => request<any>('/reports/charts'),
+    annual: (year: number) => request<any>(`/reports/annual/${year}`),
+    upcomingConferences: () => request<any[]>('/reports/upcoming-conferences'),
   },
   admin: {
     recentActivity: () => request<any[]>('/admin/recent-activity'),

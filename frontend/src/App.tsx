@@ -10,6 +10,7 @@ import DonorManagementPage from './pages/DonorManagementPage';
 import AdminPortalPage from './pages/AdminPortalPage';
 import DonorPortalPage from './pages/DonorPortalPage';
 import ReportsPage from './pages/ReportsPage';
+import AnnualReportPage from './pages/AnnualReportPage';
 import CookieConsent from './components/CookieConsent';
 import RegisterPage from './pages/RegisterPage';
 import { ResidentIntakePage } from './pages/ResidentIntakePage';
@@ -51,6 +52,7 @@ export default function App() {
           <Route path="cases" element={<RequireStaff><CaseDashboardPage /></RequireStaff>} />
           <Route path="donors" element={<RequireStaff><DonorManagementPage /></RequireStaff>} />
           <Route path="reports" element={<RequireStaff><ReportsPage /></RequireStaff>} />
+          <Route path="annual-report" element={<RequireStaff><AnnualReportPage /></RequireStaff>} />
           <Route path="/cases/new" element={<RequireStaff><ResidentIntakePage /></RequireStaff>} />
 
           {/* Admin-only route */}

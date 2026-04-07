@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { api } from '../services/api';
+import { getSupporterId } from '../services/auth';
 import LoadingSpinner from '../components/LoadingSpinner';
+import Modal from '../components/Modal';
 import type { Supporter, DonorImpact, PublicImpactSnapshot } from '../types/models';
 import { ArrowDownTrayIcon, ArrowPathIcon, GiftIcon } from '@heroicons/react/24/outline';
 
@@ -9,19 +11,79 @@ export default function DonorPortalPage() {
   const [impact, setImpact] = useState<DonorImpact | null>(null);
   const [snapshots, setSnapshots] = useState<PublicImpactSnapshot[]>([]);
   const [loading, setLoading] = useState(true);
+  const [noProfile, setNoProfile] = useState(false);
+
+  const [showDonateForm, setShowDonateForm] = useState(false);
+  const [donateForm, setDonateForm] = useState({ donationType: 'Monetary', amount: 0, campaignName: '', currencyCode: 'PHP', isRecurring: false });
+  const [donateLoading, setDonateLoading] = useState(false);
+  const [donateSuccess, setDonateSuccess] = useState(false);
+
+  const loadDonorData = async (supporterId: number) => {
+    const [d, imp, snaps] = await Promise.all([
+      api.supporters.get(supporterId),
+      api.impact.donorImpact(supporterId),
+      api.impact.snapshots(),
+    ]);
+    setDonor(d);
+    setImpact(imp);
+    setSnapshots(snaps);
+  };
 
   useEffect(() => {
-    const donorId = 1;
-    Promise.all([
-      api.supporters.get(donorId),
-      api.impact.donorImpact(donorId),
-      api.impact.snapshots(),
-    ])
-      .then(([d, imp, snaps]) => { setDonor(d); setImpact(imp); setSnapshots(snaps); })
+    const supporterId = getSupporterId();
+    if (!supporterId) {
+      setNoProfile(true);
+      setLoading(false);
+      return;
+    }
+    loadDonorData(supporterId)
+      .catch(() => setNoProfile(true))
       .finally(() => setLoading(false));
   }, []);
 
+  const handleDonate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!donor || donateForm.amount <= 0) return;
+
+    setDonateLoading(true);
+    setDonateSuccess(false);
+    try {
+      await api.donations.create({
+        supporterId: donor.supporterId,
+        donationDate: new Date().toISOString().split('T')[0],
+        ...donateForm,
+        channelSource: 'Donor Portal',
+      });
+      setDonateSuccess(true);
+      await loadDonorData(donor.supporterId);
+      const imp = await api.impact.donorImpact(donor.supporterId);
+      setImpact(imp);
+      setTimeout(() => {
+        setShowDonateForm(false);
+        setDonateSuccess(false);
+        setDonateForm({ donationType: 'Monetary', amount: 0, campaignName: '', currencyCode: 'PHP', isRecurring: false });
+      }, 1200);
+    } catch {
+      alert('Failed to process donation. Please try again.');
+    } finally {
+      setDonateLoading(false);
+    }
+  };
+
   if (loading) return <LoadingSpinner />;
+
+  if (noProfile) {
+    return (
+      <div className="max-w-lg mx-auto px-6 py-20 text-center">
+        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-10">
+          <GiftIcon className="h-12 w-12 text-haven-400 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-gray-900 mb-2">No Donor Profile Linked</h2>
+          <p className="text-sm text-gray-500">Your account is not linked to a donor profile yet. If you registered recently, please sign out and sign back in to refresh your session.</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!donor) return <div className="p-12 text-center text-gray-400">Donor not found.</div>;
 
   const isRecurring = donor.donations?.some(d => d.isRecurring);
@@ -40,8 +102,8 @@ export default function DonorPortalPage() {
           <h1 className="text-3xl font-bold mb-8">{donor.displayName}</h1>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
             {[
-              { label: 'Lifetime Giving', value: `$${impact?.totalGiven.toLocaleString()}` },
-              { label: 'Donations', value: impact?.donationCount },
+              { label: 'Lifetime Giving', value: `$${impact?.totalGiven.toLocaleString() ?? 0}` },
+              { label: 'Donations', value: impact?.donationCount ?? 0 },
               { label: 'Last Donation', value: lastDonation?.donationDate ?? '—' },
               { label: 'Recurring', value: isRecurring ? 'Active' : 'None' },
             ].map(stat => (
@@ -54,30 +116,53 @@ export default function DonorPortalPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
-        {/* Impact Section */}
-        <div className="lg:col-span-2">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Main content — Giving History then Impact */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Giving History */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="px-6 py-5 border-b border-gray-100">
+              <h2 className="font-semibold text-gray-900 text-lg">Giving History</h2>
+            </div>
+            {(!donor.donations || donor.donations.length === 0) ? (
+              <div className="px-6 py-12 text-center text-gray-400 text-sm">No donations yet. Click "Donate Again" to make your first contribution!</div>
+            ) : (
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-gray-50/80 border-b border-gray-100">
+                    <th className="text-left px-6 py-3.5 text-xs font-semibold text-gray-600 uppercase tracking-wider">Date</th>
+                    <th className="text-right px-6 py-3.5 text-xs font-semibold text-gray-600 uppercase tracking-wider">Amount</th>
+                    <th className="text-left px-6 py-3.5 text-xs font-semibold text-gray-600 uppercase tracking-wider">Campaign</th>
+                    <th className="text-left px-6 py-3.5 text-xs font-semibold text-gray-600 uppercase tracking-wider">Type</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {donor.donations.map(d => (
+                    <tr key={d.donationId} className="hover:bg-gray-50/60 transition-colors">
+                      <td className="px-6 py-4 text-sm text-gray-900">{d.donationDate}</td>
+                      <td className="px-6 py-4 text-sm text-right font-medium text-gray-900 tabular-nums">{d.currencyCode} {d.amount.toLocaleString()}</td>
+                      <td className="px-6 py-4 text-sm text-gray-600">{d.campaignName ?? '—'}</td>
+                      <td className="px-6 py-4 text-sm">
+                        {d.isRecurring
+                          ? <span className="text-xs bg-blue-50 text-blue-700 px-2.5 py-1 rounded-lg font-medium">Recurring</span>
+                          : <span className="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-lg font-medium">One-Time</span>
+                        }
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+
+          {/* Your Impact */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="px-6 py-5 border-b border-gray-100">
               <h2 className="font-semibold text-gray-900 text-lg">Your Impact</h2>
             </div>
             <div className="p-6">
-              {snapshots.length > 0 ? (
-                <div className="space-y-5">
-                  {snapshots.map(s => (
-                    <div key={s.snapshotId} className="border border-gray-100 rounded-2xl p-5 hover:bg-gray-50/50 transition-colors">
-                      <h3 className="font-semibold text-gray-900 mb-1">{s.headline}</h3>
-                      <p className="text-sm text-gray-600 leading-relaxed">{s.summaryText}</p>
-                      <p className="text-xs text-gray-400 mt-2">{s.snapshotDate}</p>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-gray-400">No impact stories available yet.</p>
-              )}
-
               {impact && impact.allocations.length > 0 && (
-                <div className="mt-6 pt-5 border-t border-gray-100">
+                <div className="mb-6">
                   <h3 className="text-sm font-semibold text-gray-700 mb-3">Programs Supported</h3>
                   <div className="space-y-2">
                     {impact.allocations.map((a, i) => (
@@ -92,20 +177,34 @@ export default function DonorPortalPage() {
                   </div>
                 </div>
               )}
+              {snapshots.length > 0 ? (
+                <div className="space-y-5">
+                  {(impact?.allocations?.length ?? 0) > 0 && <h3 className="text-sm font-semibold text-gray-700">Impact Stories</h3>}
+                  {snapshots.map(s => (
+                    <div key={s.snapshotId} className="border border-gray-100 rounded-2xl p-5 hover:bg-gray-50/50 transition-colors">
+                      <h3 className="font-semibold text-gray-900 mb-1">{s.headline}</h3>
+                      <p className="text-sm text-gray-600 leading-relaxed">{s.summaryText}</p>
+                      <p className="text-xs text-gray-400 mt-2">{s.snapshotDate}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                (impact?.allocations?.length ?? 0) === 0 && <p className="text-sm text-gray-400">No impact stories available yet.</p>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Profile / Settings */}
+        {/* Sidebar — Profile + CTAs */}
         <div className="space-y-5">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
             <h3 className="font-semibold text-gray-900 mb-5">Your Profile</h3>
             <div className="space-y-3.5 text-sm">
               {[
-                { label: 'Email', value: donor.email },
-                { label: 'Country', value: donor.country },
-                { label: 'Member Since', value: donor.firstDonationDate },
-                { label: 'Channel', value: donor.acquisitionChannel },
+                { label: 'Email', value: donor.email ?? '—' },
+                { label: 'Country', value: donor.country ?? '—' },
+                { label: 'Member Since', value: donor.firstDonationDate ?? donor.createdAt?.split('T')[0] ?? '—' },
+                { label: 'Channel', value: donor.acquisitionChannel ?? '—' },
               ].map(field => (
                 <div key={field.label}>
                   <span className="text-gray-500 block text-xs font-medium uppercase tracking-wider">{field.label}</span>
@@ -115,9 +214,11 @@ export default function DonorPortalPage() {
             </div>
           </div>
 
-          {/* CTAs */}
           <div className="space-y-3">
-            <button className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-haven-600 to-haven-700 text-white font-medium py-3.5 rounded-2xl hover:from-haven-700 hover:to-haven-800 transition-all shadow-sm hover:shadow-md">
+            <button
+              onClick={() => setShowDonateForm(true)}
+              className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-haven-600 to-haven-700 text-white font-medium py-3.5 rounded-2xl hover:from-haven-700 hover:to-haven-800 transition-all shadow-sm hover:shadow-md"
+            >
               <GiftIcon className="h-5 w-5" />
               Donate Again
             </button>
@@ -135,37 +236,55 @@ export default function DonorPortalPage() {
         </div>
       </div>
 
-      {/* Giving History Table */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="px-6 py-5 border-b border-gray-100">
-          <h2 className="font-semibold text-gray-900 text-lg">Giving History</h2>
-        </div>
-        <table className="w-full">
-          <thead>
-            <tr className="bg-gray-50/80 border-b border-gray-100">
-              <th className="text-left px-6 py-3.5 text-xs font-semibold text-gray-600 uppercase tracking-wider">Date</th>
-              <th className="text-right px-6 py-3.5 text-xs font-semibold text-gray-600 uppercase tracking-wider">Amount</th>
-              <th className="text-left px-6 py-3.5 text-xs font-semibold text-gray-600 uppercase tracking-wider">Campaign</th>
-              <th className="text-left px-6 py-3.5 text-xs font-semibold text-gray-600 uppercase tracking-wider">Type</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-50">
-            {donor.donations?.map(d => (
-              <tr key={d.donationId} className="hover:bg-gray-50/60 transition-colors">
-                <td className="px-6 py-4 text-sm text-gray-900">{d.donationDate}</td>
-                <td className="px-6 py-4 text-sm text-right font-medium text-gray-900 tabular-nums">{d.currencyCode} {d.amount.toLocaleString()}</td>
-                <td className="px-6 py-4 text-sm text-gray-600">{d.campaignName ?? '—'}</td>
-                <td className="px-6 py-4 text-sm">
-                  {d.isRecurring
-                    ? <span className="text-xs bg-blue-50 text-blue-700 px-2.5 py-1 rounded-lg font-medium">Recurring</span>
-                    : <span className="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-lg font-medium">One-Time</span>
-                  }
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {/* Donation Modal */}
+      <Modal open={showDonateForm} onClose={() => { setShowDonateForm(false); setDonateSuccess(false); }} title="Make a Donation">
+        {donateSuccess ? (
+          <div className="text-center py-6">
+            <div className="h-14 w-14 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-bold text-gray-900">Thank you!</h3>
+            <p className="text-sm text-gray-500 mt-1">Your donation has been recorded.</p>
+          </div>
+        ) : (
+          <form onSubmit={handleDonate} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Donation Type</label>
+              <select value={donateForm.donationType} onChange={e => setDonateForm(f => ({ ...f, donationType: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-haven-500/20 focus:border-haven-500 outline-none transition-all">
+                <option>Monetary</option><option>InKind</option><option>Time</option><option>Skills</option><option>SocialMedia</option>
+              </select>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Amount</label>
+                <input type="number" min="1" step="any" required value={donateForm.amount || ''} onChange={e => setDonateForm(f => ({ ...f, amount: +e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-haven-500/20 focus:border-haven-500 outline-none transition-all" placeholder="0.00" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Currency</label>
+                <select value={donateForm.currencyCode} onChange={e => setDonateForm(f => ({ ...f, currencyCode: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-haven-500/20 focus:border-haven-500 outline-none transition-all">
+                  <option>PHP</option><option>USD</option><option>SGD</option><option>CAD</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Campaign (optional)</label>
+              <input value={donateForm.campaignName} onChange={e => setDonateForm(f => ({ ...f, campaignName: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-haven-500/20 focus:border-haven-500 outline-none transition-all" placeholder="e.g., Holiday Drive 2026" />
+            </div>
+            <label className="flex items-center gap-2 text-sm text-gray-700">
+              <input type="checkbox" checked={donateForm.isRecurring} onChange={e => setDonateForm(f => ({ ...f, isRecurring: e.target.checked }))} className="rounded border-gray-300 text-haven-600 focus:ring-haven-500" />
+              Make this a recurring monthly donation
+            </label>
+            <div className="flex justify-end gap-3 pt-2">
+              <button type="button" onClick={() => setShowDonateForm(false)} className="px-4 py-2.5 text-sm font-medium text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all">Cancel</button>
+              <button type="submit" disabled={donateLoading} className="px-4 py-2.5 text-sm font-medium text-white bg-haven-600 rounded-xl hover:bg-haven-700 transition-all shadow-sm disabled:opacity-60">
+                {donateLoading ? 'Processing...' : 'Submit Donation'}
+              </button>
+            </div>
+          </form>
+        )}
+      </Modal>
     </div>
   );
 }

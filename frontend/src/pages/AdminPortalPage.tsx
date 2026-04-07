@@ -1,15 +1,15 @@
 import { useEffect, useState } from 'react';
 import { api } from '../services/api';
-import { Link } from 'react-router-dom';
 import LoadingSpinner from '../components/LoadingSpinner';
-import type { RecentActivity } from '../types/models';
+import SummaryCard from '../components/SummaryCard';
+import type { ImpactOverview } from '../types/models';
 import {
-  UserPlusIcon,
-  ChatBubbleLeftEllipsisIcon,
-  HomeModernIcon,
-  HeartIcon,
   MagnifyingGlassIcon,
   UsersIcon,
+  UserGroupIcon,
+  CurrencyDollarIcon,
+  BuildingOfficeIcon,
+  ChatBubbleLeftRightIcon,
 } from '@heroicons/react/24/outline';
 
 interface SearchResults {
@@ -33,14 +33,11 @@ const ROLE_OPTIONS = [
   { id: 3, label: 'Donor' },
 ];
 
-type Tab = 'tools' | 'users';
-
 export default function AdminPortalPage() {
-  const [activity, setActivity] = useState<RecentActivity[]>([]);
+  const [overview, setOverview] = useState<ImpactOverview | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResults | null>(null);
-  const [activeTab, setActiveTab] = useState<Tab>('tools');
 
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [usersLoading, setUsersLoading] = useState(false);
@@ -48,17 +45,10 @@ export default function AdminPortalPage() {
   const [resetUpdating, setResetUpdating] = useState<number | null>(null);
 
   useEffect(() => {
-    api.admin.recentActivity()
-      .then(setActivity)
+    Promise.all([api.impact.overview(), api.admin.users()])
+      .then(([o, u]) => { setOverview(o); setUsers(u); })
       .finally(() => setLoading(false));
   }, []);
-
-  useEffect(() => {
-    if (activeTab === 'users' && users.length === 0) {
-      setUsersLoading(true);
-      api.admin.users().then(setUsers).finally(() => setUsersLoading(false));
-    }
-  }, [activeTab]);
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
@@ -102,191 +92,144 @@ export default function AdminPortalPage() {
 
   if (loading) return <LoadingSpinner />;
 
-  const actions = [
-    { label: 'Add New Resident', icon: UserPlusIcon, gradient: 'from-haven-600 to-haven-700', to: '/cases/new' },
-    { label: 'Log Session', icon: ChatBubbleLeftEllipsisIcon, gradient: 'from-warm-500 to-warm-600', to: '#' },
-    { label: 'Record Home Visit', icon: HomeModernIcon, gradient: 'from-emerald-600 to-emerald-700', to: '#' },
-    { label: 'Add Donor', icon: HeartIcon, gradient: 'from-violet-600 to-violet-700', to: '#' },
-  ];
-
   return (
-    <div className="max-w-[1000px] mx-auto px-6 py-10">
+    <div className="max-w-[1200px] mx-auto px-6 py-10">
       <div className="mb-10">
-        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Admin Portal</h1>
-        <p className="text-gray-500 mt-2 text-base">Quick data entry, system tools, and user management.</p>
+        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Admin Dashboard</h1>
+        <p className="text-gray-500 mt-2 text-base">High-level overview and system administration.</p>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-2 mb-8">
-        <button onClick={() => setActiveTab('tools')}
-          className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${activeTab === 'tools' ? 'bg-haven-600 text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
-          Tools &amp; Activity
-        </button>
-        <button onClick={() => setActiveTab('users')}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${activeTab === 'users' ? 'bg-haven-600 text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
-          <UsersIcon className="h-4 w-4" />
-          User Management
-        </button>
-      </div>
+      {/* Metrics Overview */}
+      {overview && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-10">
+          <SummaryCard title="Active Residents" value={overview.totalResidents} icon={<UserGroupIcon className="h-7 w-7" />} />
+          <SummaryCard title="Counseling Sessions" value={overview.totalSessions.toLocaleString()} icon={<ChatBubbleLeftRightIcon className="h-7 w-7" />} accent="border-warm-500" />
+          <SummaryCard title="Total Donations" value={`$${overview.totalDonations.toLocaleString()}`} icon={<CurrencyDollarIcon className="h-7 w-7" />} accent="border-emerald-500" />
+          <SummaryCard title="Active Safehouses" value={overview.activeSafehouses} icon={<BuildingOfficeIcon className="h-7 w-7" />} accent="border-violet-500" />
+        </div>
+      )}
 
-      {activeTab === 'tools' && (
-        <>
-          {/* Search Bar */}
-          <div className="mb-10">
-            <div className="relative max-w-xl">
-              <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search residents or donors..."
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && handleSearch()}
-                className="w-full pl-12 pr-4 py-3.5 rounded-2xl border border-gray-200 bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-haven-500/30 focus:border-haven-500 transition-all"
-              />
-            </div>
-            {searchResults && (
-              <div className="mt-4 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                {searchResults.residents.length === 0 && searchResults.supporters.length === 0 ? (
-                  <p className="text-sm text-gray-400">No results found for "{searchQuery}"</p>
-                ) : (
-                  <div className="space-y-5">
-                    {searchResults.residents.length > 0 && (
-                      <div>
-                        <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Residents</h4>
-                        <div className="space-y-1">
-                          {searchResults.residents.map(r => (
-                            <div key={r.residentId} className="flex items-center justify-between py-2.5 px-3 rounded-lg hover:bg-gray-50 transition-colors text-sm">
-                              <span className="font-medium text-gray-900">{r.internalCode} — {r.caseControlNo}</span>
-                              <span className="text-gray-500">{r.caseStatus} / {r.currentRiskLevel}</span>
-                            </div>
-                          ))}
+      {/* Search */}
+      <div className="mb-10">
+        <div className="relative max-w-xl">
+          <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search residents or donors..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleSearch()}
+            className="w-full pl-12 pr-4 py-3.5 rounded-2xl border border-gray-200 bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-haven-500/30 focus:border-haven-500 transition-all"
+          />
+        </div>
+        {searchResults && (
+          <div className="mt-4 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            {searchResults.residents.length === 0 && searchResults.supporters.length === 0 ? (
+              <p className="text-sm text-gray-400">No results found for "{searchQuery}"</p>
+            ) : (
+              <div className="space-y-5">
+                {searchResults.residents.length > 0 && (
+                  <div>
+                    <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Residents</h4>
+                    <div className="space-y-1">
+                      {searchResults.residents.map(r => (
+                        <div key={r.residentId} className="flex items-center justify-between py-2.5 px-3 rounded-lg hover:bg-gray-50 transition-colors text-sm">
+                          <span className="font-medium text-gray-900">{r.internalCode} — {r.caseControlNo}</span>
+                          <span className="text-gray-500">{r.caseStatus} / {r.currentRiskLevel}</span>
                         </div>
-                      </div>
-                    )}
-                    {searchResults.supporters.length > 0 && (
-                      <div>
-                        <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Supporters</h4>
-                        <div className="space-y-1">
-                          {searchResults.supporters.map(s => (
-                            <div key={s.supporterId} className="flex items-center justify-between py-2.5 px-3 rounded-lg hover:bg-gray-50 transition-colors text-sm">
-                              <span className="font-medium text-gray-900">{s.displayName}</span>
-                              <span className="text-gray-500">{s.email}</span>
-                            </div>
-                          ))}
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {searchResults.supporters.length > 0 && (
+                  <div>
+                    <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Supporters</h4>
+                    <div className="space-y-1">
+                      {searchResults.supporters.map(s => (
+                        <div key={s.supporterId} className="flex items-center justify-between py-2.5 px-3 rounded-lg hover:bg-gray-50 transition-colors text-sm">
+                          <span className="font-medium text-gray-900">{s.displayName}</span>
+                          <span className="text-gray-500">{s.email}</span>
                         </div>
-                      </div>
-                    )}
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
             )}
           </div>
+        )}
+      </div>
 
-          {/* Action Buttons */}
-          <div className="grid grid-cols-2 gap-5 mb-12">
-            {actions.map(a => (
-              <Link
-                key={a.label}
-                to={a.to}
-                className={`group bg-gradient-to-br ${a.gradient} text-white rounded-2xl p-6 flex flex-col items-center gap-3 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all`}
-              >
-                <a.icon className="h-10 w-10 opacity-90 group-hover:opacity-100 transition-opacity" />
-                <span className="text-lg font-semibold">{a.label}</span>
-              </Link>
-            ))}
-            </div>
-
-          {/* Recent Activity Feed */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="px-6 py-5 border-b border-gray-100">
-              <h2 className="font-semibold text-gray-900 text-lg">Recent Activity</h2>
-            </div>
-            <div className="divide-y divide-gray-50">
-              {activity.map((item, i) => (
-                <div key={i} className="px-6 py-4 flex items-center gap-4 hover:bg-gray-50/60 transition-colors">
-                  <span className={`shrink-0 h-3 w-3 rounded-full ring-4 ring-opacity-20 ${
-                    item.type === 'Session' ? 'bg-haven-500 ring-haven-500' :
-                    item.type === 'Home Visit' ? 'bg-warm-500 ring-warm-500' : 'bg-emerald-500 ring-emerald-500'
-                  }`} />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-900">{item.description}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">{item.type} &middot; {item.date} {item.socialWorkerName && `· ${item.socialWorkerName}`}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+      {/* User Management */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="px-6 py-5 border-b border-gray-100 flex items-center gap-3">
+          <UsersIcon className="h-5 w-5 text-haven-600" />
+          <div>
+            <h2 className="font-semibold text-gray-900 text-lg">User Management</h2>
+            <p className="text-sm text-gray-500 mt-0.5">Manage roles and password resets for all system users.</p>
           </div>
-        </>
-      )}
-
-      {activeTab === 'users' && (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="px-6 py-5 border-b border-gray-100">
-            <h2 className="font-semibold text-gray-900 text-lg">All Users</h2>
-            <p className="text-sm text-gray-500 mt-1">Change a user's role to promote or demote them.</p>
-          </div>
-
-          {usersLoading ? (
-            <div className="p-10"><LoadingSpinner /></div>
-          ) : (
-            <table className="w-full text-left">
-              <thead>
-                <tr className="border-b border-gray-100 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  <th className="px-6 py-3">Username</th>
-                  <th className="px-6 py-3">Name</th>
-                  <th className="px-6 py-3">Current Role</th>
-                  <th className="px-6 py-3">Change Role</th>
-                  <th className="px-6 py-3">Password Reset</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {users.map(u => (
-                  <tr key={u.userId} className="hover:bg-gray-50/60 transition-colors">
-                    <td className="px-6 py-4 text-sm font-medium text-gray-900">{u.username}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      {[u.userFirstName, u.userLastName].filter(Boolean).join(' ') || '—'}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${
-                        u.role === 'Admin' ? 'bg-violet-100 text-violet-700' :
-                        u.role === 'Staff' ? 'bg-haven-100 text-haven-700' :
-                        'bg-gray-100 text-gray-600'
-                      }`}>
-                        {u.role}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <select
-                        value={u.roleId}
-                        disabled={roleUpdating === u.userId}
-                        onChange={e => handleRoleChange(u.userId, Number(e.target.value))}
-                        className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-haven-500/30 disabled:opacity-50"
-                      >
-                        {ROLE_OPTIONS.map(r => (
-                          <option key={r.id} value={r.id}>{r.label}</option>
-                        ))}
-                      </select>
-                    </td>
-                    <td className="px-6 py-4">
-                      <button
-                        disabled={resetUpdating === u.userId}
-                        onClick={() => handleTogglePasswordReset(u.userId, u.needPasswordReset)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all disabled:opacity-50 ${
-                          u.needPasswordReset
-                            ? 'bg-amber-100 text-amber-700 hover:bg-amber-200'
-                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                        }`}
-                      >
-                        {u.needPasswordReset ? 'Reset Pending' : 'Require Reset'}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
         </div>
-      )}
+
+        {usersLoading ? (
+          <div className="p-10"><LoadingSpinner /></div>
+        ) : (
+          <table className="w-full text-left">
+            <thead>
+              <tr className="border-b border-gray-100 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3">Username</th>
+                <th className="px-6 py-3">Name</th>
+                <th className="px-6 py-3">Current Role</th>
+                <th className="px-6 py-3">Change Role</th>
+                <th className="px-6 py-3">Password Reset</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {users.map(u => (
+                <tr key={u.userId} className="hover:bg-gray-50/60 transition-colors">
+                  <td className="px-6 py-4 text-sm font-medium text-gray-900">{u.username}</td>
+                  <td className="px-6 py-4 text-sm text-gray-600">
+                    {[u.userFirstName, u.userLastName].filter(Boolean).join(' ') || '—'}
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${
+                      u.role === 'Admin' ? 'bg-violet-100 text-violet-700' :
+                      u.role === 'Staff' ? 'bg-haven-100 text-haven-700' :
+                      'bg-gray-100 text-gray-600'
+                    }`}>
+                      {u.role}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <select
+                      value={u.roleId}
+                      disabled={roleUpdating === u.userId}
+                      onChange={e => handleRoleChange(u.userId, Number(e.target.value))}
+                      className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-haven-500/30 disabled:opacity-50"
+                    >
+                      {ROLE_OPTIONS.map(r => (
+                        <option key={r.id} value={r.id}>{r.label}</option>
+                      ))}
+                    </select>
+                  </td>
+                  <td className="px-6 py-4">
+                    <button
+                      disabled={resetUpdating === u.userId}
+                      onClick={() => handleTogglePasswordReset(u.userId, u.needPasswordReset)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all disabled:opacity-50 ${
+                        u.needPasswordReset
+                          ? 'bg-amber-100 text-amber-700 hover:bg-amber-200'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >
+                      {u.needPasswordReset ? 'Reset Pending' : 'Require Reset'}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
     </div>
   );
 }

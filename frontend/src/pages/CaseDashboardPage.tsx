@@ -3,10 +3,10 @@ import { api } from '../services/api';
 import StatusBadge from '../components/StatusBadge';
 import LoadingSpinner from '../components/LoadingSpinner';
 import Modal from '../components/Modal';
-import type { Resident, AlertsData } from '../types/models';
-import { ExclamationTriangleIcon, MagnifyingGlassIcon, FunnelIcon, PlusIcon } from '@heroicons/react/24/solid';
+import type { Resident, AlertsData, Safehouse } from '../types/models';
+import { ExclamationTriangleIcon, MagnifyingGlassIcon, FunnelIcon, PlusIcon, PencilSquareIcon, ChevronDownIcon } from '@heroicons/react/24/solid';
 
-type Tab = 'sessions' | 'health' | 'education' | 'visits' | 'notes';
+type Tab = 'sessions' | 'health' | 'education' | 'visits' | 'conferences' | 'notes';
 
 export default function CaseDashboardPage() {
   const [residents, setResidents] = useState<Resident[]>([]);
@@ -18,23 +18,28 @@ export default function CaseDashboardPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [riskFilter, setRiskFilter] = useState<string>('');
+  const [safehouseFilter, setSafehouseFilter] = useState<string>('');
+  const [safehouses, setSafehouses] = useState<Safehouse[]>([]);
 
   useEffect(() => {
-    Promise.all([api.residents.list(), api.residents.alerts()])
-      .then(([r, a]) => { setResidents(r); setAlerts(a); })
+    Promise.all([api.residents.list(), api.residents.alerts(), api.safehouses.list()])
+      .then(([r, a, sh]) => { setResidents(r); setAlerts(a); setSafehouses(sh); })
       .finally(() => setLoading(false));
   }, []);
 
+  const [showDetails, setShowDetails] = useState(false);
   const [showSessionForm, setShowSessionForm] = useState(false);
   const [showVisitForm, setShowVisitForm] = useState(false);
-  const [sessionForm, setSessionForm] = useState({ sessionType: 'Individual', sessionDurationMinutes: 60, emotionalStateObserved: '', emotionalStateEnd: '', sessionNarrative: '', interventionsApplied: '', followUpActions: '' });
-  const [visitForm, setVisitForm] = useState({ visitType: 'Routine Follow-Up', locationVisited: '', purpose: '', observations: '', familyCooperationLevel: 'Cooperative' });
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [editForm, setEditForm] = useState<Record<string, any>>({});
+  const [sessionForm, setSessionForm] = useState({ sessionDate: new Date().toISOString().split('T')[0], sessionType: 'Individual', sessionDurationMinutes: 60, emotionalStateObserved: '', emotionalStateEnd: '', sessionNarrative: '', interventionsApplied: '', followUpActions: '' });
+  const [visitForm, setVisitForm] = useState({ visitDate: new Date().toISOString().split('T')[0], visitType: 'Routine Follow-Up', locationVisited: '', purpose: '', observations: '', familyCooperationLevel: 'Cooperative', safetyConcernsNoted: false, followUpNeeded: false });
 
   const handleAddSession = async () => {
     if (!selected) return;
     await api.sessions.create({
       residentId: selected.residentId,
-      sessionDate: new Date().toISOString().split('T')[0],
+      socialWorker: selected.assignedSocialWorker,
       ...sessionForm,
       progressNoted: false,
       concernsFlagged: false,
@@ -43,24 +48,43 @@ export default function CaseDashboardPage() {
     const detail = await api.residents.get(selected.residentId);
     setSelected(detail);
     setShowSessionForm(false);
-    setSessionForm({ sessionType: 'Individual', sessionDurationMinutes: 60, emotionalStateObserved: '', emotionalStateEnd: '', sessionNarrative: '', interventionsApplied: '', followUpActions: '' });
+    setSessionForm({ sessionDate: new Date().toISOString().split('T')[0], sessionType: 'Individual', sessionDurationMinutes: 60, emotionalStateObserved: '', emotionalStateEnd: '', sessionNarrative: '', interventionsApplied: '', followUpActions: '' });
   };
 
   const handleAddVisit = async () => {
     if (!selected) return;
     await api.visits.create({
       residentId: selected.residentId,
-      visitDate: new Date().toISOString().split('T')[0],
       socialWorker: selected.assignedSocialWorker,
       ...visitForm,
-      safetyConcernsNoted: false,
-      followUpNeeded: false,
       visitOutcome: 'Favorable',
     });
     const detail = await api.residents.get(selected.residentId);
     setSelected(detail);
     setShowVisitForm(false);
-    setVisitForm({ visitType: 'Routine Follow-Up', locationVisited: '', purpose: '', observations: '', familyCooperationLevel: 'Cooperative' });
+    setVisitForm({ visitDate: new Date().toISOString().split('T')[0], visitType: 'Routine Follow-Up', locationVisited: '', purpose: '', observations: '', familyCooperationLevel: 'Cooperative', safetyConcernsNoted: false, followUpNeeded: false });
+  };
+
+  const openEditForm = () => {
+    if (!selected) return;
+    setEditForm({
+      caseStatus: selected.caseStatus ?? 'Active',
+      currentRiskLevel: selected.currentRiskLevel ?? 'Low',
+      assignedSocialWorker: selected.assignedSocialWorker ?? '',
+      caseCategory: selected.caseCategory ?? '',
+      presentAge: selected.presentAge ?? '',
+      safehouseId: selected.safehouseId ?? '',
+    });
+    setShowEditForm(true);
+  };
+
+  const handleEditSave = async () => {
+    if (!selected) return;
+    await api.residents.update(selected.residentId, editForm);
+    const updated = await api.residents.get(selected.residentId);
+    setSelected(updated);
+    setResidents(prev => prev.map(r => r.residentId === selected.residentId ? { ...r, ...editForm } : r));
+    setShowEditForm(false);
   };
 
   const filteredResidents = useMemo(() => {
@@ -80,8 +104,11 @@ export default function CaseDashboardPage() {
     if (riskFilter) {
       filtered = filtered.filter(r => r.currentRiskLevel === riskFilter);
     }
+    if (safehouseFilter) {
+      filtered = filtered.filter(r => String(r.safehouseId) === safehouseFilter);
+    }
     return filtered;
-  }, [residents, searchTerm, statusFilter, riskFilter]);
+  }, [residents, searchTerm, statusFilter, riskFilter, safehouseFilter]);
 
   const selectResident = async (id: number) => {
     const detail = await api.residents.get(id);
@@ -96,6 +123,7 @@ export default function CaseDashboardPage() {
     { key: 'health', label: 'Health' },
     { key: 'education', label: 'Education' },
     { key: 'visits', label: 'Home Visits' },
+    { key: 'conferences', label: 'Case Conferences' },
     { key: 'notes', label: 'Case Notes' },
   ];
 
@@ -158,6 +186,16 @@ export default function CaseDashboardPage() {
                   <option value="Low">Low</option>
                 </select>
               </div>
+              <select
+                value={safehouseFilter}
+                onChange={e => setSafehouseFilter(e.target.value)}
+                className="w-full text-xs border border-gray-200 rounded-xl px-2 py-1.5 mt-2 focus:ring-2 focus:ring-haven-500/20 focus:border-haven-500 outline-none"
+              >
+                <option value="">All Safehouses</option>
+                {safehouses.map(sh => (
+                  <option key={sh.safehouseId} value={String(sh.safehouseId)}>{sh.name}</option>
+                ))}
+              </select>
             </div>
             <ul className="divide-y divide-gray-50 max-h-[calc(100vh-340px)] overflow-y-auto">
               {filteredResidents.map(r => (
@@ -189,24 +227,150 @@ export default function CaseDashboardPage() {
           ) : (
             <div className="space-y-5">
               {/* Profile Header */}
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <div className="flex items-center gap-3">
-                      <h2 className="text-xl font-bold text-gray-900">{selected.internalCode}</h2>
-                      <StatusBadge level={selected.currentRiskLevel} size="md" />
-                      <StatusBadge level={selected.caseStatus} size="md" />
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div className="p-6">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <div className="flex items-center gap-3">
+                        <h2 className="text-xl font-bold text-gray-900">{selected.internalCode}</h2>
+                        <StatusBadge level={selected.currentRiskLevel} size="md" />
+                        <StatusBadge level={selected.caseStatus} size="md" />
+                      </div>
+                      <p className="text-sm text-gray-500 mt-1.5">
+                        {selected.caseCategory} &middot; Case {selected.caseControlNo} &middot; {selected.safehouse?.name}
+                      </p>
                     </div>
-                    <p className="text-sm text-gray-500 mt-1.5">
-                      {selected.caseCategory} &middot; Case {selected.caseControlNo} &middot; {selected.safehouse?.name}
-                    </p>
-                  </div>
-                  <div className="text-right text-sm text-gray-500 space-y-0.5">
-                    <p>Age: <span className="font-medium text-gray-900">{selected.presentAge}</span></p>
-                    <p>Admitted: <span className="font-medium text-gray-900">{selected.dateOfAdmission}</span></p>
-                    <p>Worker: <span className="font-medium text-gray-900">{selected.assignedSocialWorker}</span></p>
+                    <div className="flex items-start gap-4">
+                      <div className="text-right text-sm text-gray-500 space-y-0.5">
+                        <p>Age: <span className="font-medium text-gray-900">{selected.presentAge}</span></p>
+                        <p>Admitted: <span className="font-medium text-gray-900">{selected.dateOfAdmission}</span></p>
+                        <p>Worker: <span className="font-medium text-gray-900">{selected.assignedSocialWorker}</span></p>
+                      </div>
+                      <button onClick={openEditForm} className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-haven-700 bg-haven-50 rounded-xl hover:bg-haven-100 transition-all">
+                        <PencilSquareIcon className="h-4 w-4" /> Edit
+                      </button>
+                    </div>
                   </div>
                 </div>
+
+                {/* Expandable Full Profile */}
+                <button
+                  onClick={() => setShowDetails(d => !d)}
+                  className="w-full flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium text-gray-500 bg-gray-50/80 border-t border-gray-100 hover:bg-gray-100/80 transition-all"
+                >
+                  {showDetails ? 'Hide' : 'Show'} Full Profile
+                  <ChevronDownIcon className={`h-3.5 w-3.5 transition-transform ${showDetails ? 'rotate-180' : ''}`} />
+                </button>
+
+                {showDetails && (
+                  <div className="px-6 pb-6 pt-4 border-t border-gray-100 space-y-5">
+                    {/* Sub-category Flags */}
+                    {(() => {
+                      const flags = [
+                        selected.subCatOrphaned && 'Orphaned',
+                        selected.subCatTrafficked && 'Trafficked',
+                        selected.subCatChildLabor && 'Child Labor',
+                        selected.subCatPhysicalAbuse && 'Physical Abuse',
+                        selected.subCatSexualAbuse && 'Sexual Abuse',
+                        selected.subCatOsaec && 'OSAEC',
+                        selected.subCatCicl && 'CICL',
+                        selected.subCatAtRisk && 'At-Risk',
+                        selected.subCatStreetChild && 'Street Child',
+                        selected.subCatChildWithHiv && 'Child with HIV',
+                      ].filter(Boolean) as string[];
+                      return flags.length > 0 ? (
+                        <div>
+                          <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Sub-Categories</h4>
+                          <div className="flex flex-wrap gap-1.5">
+                            {flags.map(f => (
+                              <span key={f} className="px-2.5 py-1 text-xs font-medium bg-amber-50 text-amber-800 rounded-lg">{f}</span>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null;
+                    })()}
+
+                    {/* Personal Information */}
+                    <div>
+                      <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Personal Information</h4>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-2 text-sm">
+                        <div><span className="text-gray-500">Sex</span><p className="font-medium text-gray-900">{selected.sex ?? '—'}</p></div>
+                        <div><span className="text-gray-500">Date of Birth</span><p className="font-medium text-gray-900">{selected.dateOfBirth ?? '—'}</p></div>
+                        <div><span className="text-gray-500">Birth Status</span><p className="font-medium text-gray-900">{selected.birthStatus ?? '—'}</p></div>
+                        <div><span className="text-gray-500">Place of Birth</span><p className="font-medium text-gray-900">{selected.placeOfBirth ?? '—'}</p></div>
+                        <div><span className="text-gray-500">Religion</span><p className="font-medium text-gray-900">{selected.religion ?? '—'}</p></div>
+                        <div><span className="text-gray-500">Age at Admission</span><p className="font-medium text-gray-900">{selected.ageUponAdmission ?? '—'}</p></div>
+                        <div><span className="text-gray-500">Length of Stay</span><p className="font-medium text-gray-900">{selected.lengthOfStay ?? '—'}</p></div>
+                        <div><span className="text-gray-500">Initial Risk</span><p className="font-medium text-gray-900">{selected.initialRiskLevel ?? '—'}</p></div>
+                      </div>
+                    </div>
+
+                    {/* Disability & Special Needs */}
+                    {(selected.isPwd || selected.hasSpecialNeeds) && (
+                      <div>
+                        <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Disability & Special Needs</h4>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-2 text-sm">
+                          <div><span className="text-gray-500">PWD</span><p className="font-medium text-gray-900">{selected.isPwd ? 'Yes' : 'No'}</p></div>
+                          {selected.isPwd && <div><span className="text-gray-500">PWD Type</span><p className="font-medium text-gray-900">{selected.pwdType ?? '—'}</p></div>}
+                          <div><span className="text-gray-500">Special Needs</span><p className="font-medium text-gray-900">{selected.hasSpecialNeeds ? 'Yes' : 'No'}</p></div>
+                          {selected.hasSpecialNeeds && <div><span className="text-gray-500">Diagnosis</span><p className="font-medium text-gray-900">{selected.specialNeedsDiagnosis ?? '—'}</p></div>}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Family Context */}
+                    {(() => {
+                      const familyFlags = [
+                        selected.familyIs4Ps && '4Ps Beneficiary',
+                        selected.familySoloParent && 'Solo Parent',
+                        selected.familyIndigenous && 'Indigenous',
+                        selected.familyParentPwd && 'Parent is PWD',
+                        selected.familyInformalSettler && 'Informal Settler',
+                      ].filter(Boolean) as string[];
+                      return familyFlags.length > 0 ? (
+                        <div>
+                          <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Family Context</h4>
+                          <div className="flex flex-wrap gap-1.5">
+                            {familyFlags.map(f => (
+                              <span key={f} className="px-2.5 py-1 text-xs font-medium bg-violet-50 text-violet-800 rounded-lg">{f}</span>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null;
+                    })()}
+
+                    {/* Referral & Reintegration */}
+                    <div>
+                      <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Referral & Reintegration</h4>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-2 text-sm">
+                        <div><span className="text-gray-500">Referral Source</span><p className="font-medium text-gray-900">{selected.referralSource ?? '—'}</p></div>
+                        <div><span className="text-gray-500">Referring Person</span><p className="font-medium text-gray-900">{selected.referringAgencyPerson ?? '—'}</p></div>
+                        <div><span className="text-gray-500">Reintegration Type</span><p className="font-medium text-gray-900">{selected.reintegrationType ?? '—'}</p></div>
+                        <div><span className="text-gray-500">Reintegration Status</span><p className="font-medium text-gray-900">{selected.reintegrationStatus ?? '—'}</p></div>
+                      </div>
+                    </div>
+
+                    {/* Key Dates */}
+                    <div>
+                      <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Key Dates</h4>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-2 text-sm">
+                        <div><span className="text-gray-500">COLB Registered</span><p className="font-medium text-gray-900">{selected.dateColbRegistered ?? '—'}</p></div>
+                        <div><span className="text-gray-500">COLB Obtained</span><p className="font-medium text-gray-900">{selected.dateColbObtained ?? '—'}</p></div>
+                        <div><span className="text-gray-500">Case Study Prepared</span><p className="font-medium text-gray-900">{selected.dateCaseStudyPrepared ?? '—'}</p></div>
+                        <div><span className="text-gray-500">Date Enrolled</span><p className="font-medium text-gray-900">{selected.dateEnrolled ?? '—'}</p></div>
+                        <div><span className="text-gray-500">Date Closed</span><p className="font-medium text-gray-900">{selected.dateClosed ?? '—'}</p></div>
+                      </div>
+                    </div>
+
+                    {/* Initial Assessment */}
+                    {selected.initialCaseAssessment && (
+                      <div>
+                        <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Initial Case Assessment</h4>
+                        <p className="text-sm text-gray-700 leading-relaxed bg-gray-50 rounded-xl p-4">{selected.initialCaseAssessment}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Tabs */}
@@ -248,8 +412,16 @@ export default function CaseDashboardPage() {
                             </div>
                             <span className="text-xs text-gray-500">{s.sessionDate} &middot; {s.sessionDurationMinutes} min</span>
                           </div>
+                          {(s.emotionalStateObserved || s.emotionalStateEnd) && (
+                            <div className="flex gap-3 mb-2">
+                              {s.emotionalStateObserved && <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-lg">Start: {s.emotionalStateObserved}</span>}
+                              {s.emotionalStateEnd && <span className="text-xs bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-lg">End: {s.emotionalStateEnd}</span>}
+                            </div>
+                          )}
                           <p className="text-sm text-gray-700 leading-relaxed">{s.sessionNarrative}</p>
-                          {s.followUpActions && <p className="text-xs text-gray-500 mt-2">Follow-up: {s.followUpActions}</p>}
+                          {s.interventionsApplied && <p className="text-xs text-haven-700 mt-2 font-medium">Interventions: {s.interventionsApplied}</p>}
+                          {s.followUpActions && <p className="text-xs text-gray-500 mt-1">Follow-up: {s.followUpActions}</p>}
+                          {s.socialWorker && <p className="text-xs text-gray-400 mt-1">Worker: {(s.socialWorker as any).userFirstName ?? ''} {(s.socialWorker as any).userLastName ?? ''}</p>}
                         </div>
                       ))}
                     </div>
@@ -331,6 +503,56 @@ export default function CaseDashboardPage() {
                     </div>
                   )}
 
+                  {activeTab === 'conferences' && (() => {
+                    const conferences = (selected.interventionPlans ?? []).filter((p: any) => p.caseConferenceDate);
+                    const today = new Date().toISOString().split('T')[0];
+                    const upcoming = conferences.filter((c: any) => c.caseConferenceDate >= today).sort((a: any, b: any) => a.caseConferenceDate.localeCompare(b.caseConferenceDate));
+                    const past = conferences.filter((c: any) => c.caseConferenceDate < today).sort((a: any, b: any) => b.caseConferenceDate.localeCompare(a.caseConferenceDate));
+                    return (
+                      <div className="space-y-6">
+                        {conferences.length === 0 && <p className="text-gray-400 text-sm">No case conferences scheduled or recorded yet.</p>}
+                        {upcoming.length > 0 && (
+                          <div>
+                            <h4 className="text-sm font-semibold text-haven-700 mb-3 flex items-center gap-2">
+                              <span className="h-2 w-2 rounded-full bg-haven-500 animate-pulse" /> Upcoming Conferences
+                            </h4>
+                            <div className="space-y-3">
+                              {upcoming.map((c: any) => (
+                                <div key={c.planId} className="border border-haven-100 rounded-2xl p-5 bg-haven-50/30">
+                                  <div className="flex items-center justify-between mb-2">
+                                    <span className="font-medium text-sm text-haven-800">{c.planCategory}</span>
+                                    <span className="text-xs font-semibold text-haven-600 bg-haven-100 px-2.5 py-0.5 rounded-lg">{c.caseConferenceDate}</span>
+                                  </div>
+                                  <p className="text-sm text-gray-700 leading-relaxed">{c.planDescription}</p>
+                                  {c.servicesProvided && <p className="text-xs text-gray-500 mt-1">Services: {c.servicesProvided}</p>}
+                                  <StatusBadge level={c.status} />
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {past.length > 0 && (
+                          <div>
+                            <h4 className="text-sm font-semibold text-gray-600 mb-3">Past Conferences</h4>
+                            <div className="space-y-3">
+                              {past.map((c: any) => (
+                                <div key={c.planId} className="border border-gray-100 rounded-2xl p-5 hover:bg-gray-50/50 transition-colors">
+                                  <div className="flex items-center justify-between mb-2">
+                                    <span className="font-medium text-sm">{c.planCategory}</span>
+                                    <span className="text-xs text-gray-500">{c.caseConferenceDate}</span>
+                                  </div>
+                                  <p className="text-sm text-gray-700 leading-relaxed">{c.planDescription}</p>
+                                  {c.servicesProvided && <p className="text-xs text-gray-500 mt-1">Services: {c.servicesProvided}</p>}
+                                  <StatusBadge level={c.status} />
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+
                   {activeTab === 'notes' && (
                     <div className="space-y-4">
                       {(selected.interventionPlans?.length ?? 0) === 0 && <p className="text-gray-400 text-sm">No intervention plans yet.</p>}
@@ -408,15 +630,27 @@ export default function CaseDashboardPage() {
 
       <Modal open={showSessionForm} onClose={() => setShowSessionForm(false)} title="Add Counseling Session">
         <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Session Type</label>
-            <select value={sessionForm.sessionType} onChange={e => setSessionForm(f => ({ ...f, sessionType: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-haven-500/20 focus:border-haven-500 outline-none transition-all">
-              <option>Individual</option><option>Group</option><option>Family</option>
-            </select>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Session Date</label>
+              <input type="date" value={sessionForm.sessionDate} onChange={e => setSessionForm(f => ({ ...f, sessionDate: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-haven-500/20 focus:border-haven-500 outline-none transition-all" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Session Type</label>
+              <select value={sessionForm.sessionType} onChange={e => setSessionForm(f => ({ ...f, sessionType: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-haven-500/20 focus:border-haven-500 outline-none transition-all">
+                <option>Individual</option><option>Group</option><option>Family</option>
+              </select>
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Duration (min)</label>
-            <input type="number" value={sessionForm.sessionDurationMinutes} onChange={e => setSessionForm(f => ({ ...f, sessionDurationMinutes: +e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-haven-500/20 focus:border-haven-500 outline-none transition-all" />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Duration (min)</label>
+              <input type="number" value={sessionForm.sessionDurationMinutes} onChange={e => setSessionForm(f => ({ ...f, sessionDurationMinutes: +e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-haven-500/20 focus:border-haven-500 outline-none transition-all" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Social Worker</label>
+              <input disabled value={selected?.assignedSocialWorker ?? ''} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 text-gray-600 outline-none" />
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -453,11 +687,17 @@ export default function CaseDashboardPage() {
 
       <Modal open={showVisitForm} onClose={() => setShowVisitForm(false)} title="Add Home Visit">
         <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Visit Type</label>
-            <select value={visitForm.visitType} onChange={e => setVisitForm(f => ({ ...f, visitType: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-haven-500/20 focus:border-haven-500 outline-none transition-all">
-              <option>Routine Follow-Up</option><option>Reintegration Assessment</option><option>Post-Placement Monitoring</option><option>Emergency</option>
-            </select>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Visit Date</label>
+              <input type="date" value={visitForm.visitDate} onChange={e => setVisitForm(f => ({ ...f, visitDate: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-haven-500/20 focus:border-haven-500 outline-none transition-all" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Visit Type</label>
+              <select value={visitForm.visitType} onChange={e => setVisitForm(f => ({ ...f, visitType: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-haven-500/20 focus:border-haven-500 outline-none transition-all">
+                <option>Routine Follow-Up</option><option>Reintegration Assessment</option><option>Post-Placement Monitoring</option><option>Emergency</option>
+              </select>
+            </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Location Visited</label>
@@ -477,9 +717,56 @@ export default function CaseDashboardPage() {
               <option>Highly Cooperative</option><option>Cooperative</option><option>Neutral</option><option>Uncooperative</option>
             </select>
           </div>
+          <div className="flex gap-6">
+            <label className="flex items-center gap-2 text-sm text-gray-700">
+              <input type="checkbox" checked={visitForm.safetyConcernsNoted} onChange={e => setVisitForm(f => ({ ...f, safetyConcernsNoted: e.target.checked }))} className="rounded border-gray-300 text-red-600 focus:ring-red-500" />
+              Safety Concerns Noted
+            </label>
+            <label className="flex items-center gap-2 text-sm text-gray-700">
+              <input type="checkbox" checked={visitForm.followUpNeeded} onChange={e => setVisitForm(f => ({ ...f, followUpNeeded: e.target.checked }))} className="rounded border-gray-300 text-haven-600 focus:ring-haven-500" />
+              Follow-Up Needed
+            </label>
+          </div>
           <div className="flex justify-end gap-3 pt-2">
             <button onClick={() => setShowVisitForm(false)} className="px-4 py-2.5 text-sm font-medium text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all">Cancel</button>
             <button onClick={handleAddVisit} className="px-4 py-2.5 text-sm font-medium text-white bg-haven-600 rounded-xl hover:bg-haven-700 transition-all shadow-sm">Save Visit</button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal open={showEditForm} onClose={() => setShowEditForm(false)} title="Edit Resident Profile">
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Case Status</label>
+              <select value={editForm.caseStatus ?? ''} onChange={e => setEditForm(f => ({ ...f, caseStatus: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-haven-500/20 focus:border-haven-500 outline-none transition-all">
+                <option>Active</option><option>Closed</option><option>Transferred</option><option>Pending</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Risk Level</label>
+              <select value={editForm.currentRiskLevel ?? ''} onChange={e => setEditForm(f => ({ ...f, currentRiskLevel: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-haven-500/20 focus:border-haven-500 outline-none transition-all">
+                <option>Critical</option><option>High</option><option>Medium</option><option>Low</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Case Category</label>
+            <select value={editForm.caseCategory ?? ''} onChange={e => setEditForm(f => ({ ...f, caseCategory: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-haven-500/20 focus:border-haven-500 outline-none transition-all">
+              <option>Neglect</option><option>Abandonment</option><option>Physical Abuse</option><option>Sexual Abuse</option><option>Exploitation</option><option>Trafficking</option><option>Other</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Assigned Social Worker</label>
+            <input value={editForm.assignedSocialWorker ?? ''} onChange={e => setEditForm(f => ({ ...f, assignedSocialWorker: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-haven-500/20 focus:border-haven-500 outline-none transition-all" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Present Age</label>
+            <input type="number" value={editForm.presentAge ?? ''} onChange={e => setEditForm(f => ({ ...f, presentAge: +e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-haven-500/20 focus:border-haven-500 outline-none transition-all" />
+          </div>
+          <div className="flex justify-end gap-3 pt-2">
+            <button onClick={() => setShowEditForm(false)} className="px-4 py-2.5 text-sm font-medium text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all">Cancel</button>
+            <button onClick={handleEditSave} className="px-4 py-2.5 text-sm font-medium text-white bg-haven-600 rounded-xl hover:bg-haven-700 transition-all shadow-sm">Save Changes</button>
           </div>
         </div>
       </Modal>

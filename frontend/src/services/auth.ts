@@ -16,6 +16,7 @@ interface TokenPayload {
   userId: string;
   username: string;
   role: string;
+  supporterId: number | null;
   exp: number;
 }
 
@@ -25,15 +26,22 @@ export function parseToken(): TokenPayload | null {
 
   try {
     const payload = JSON.parse(atob(token.split('.')[1]));
+    const sid = payload['supporterId'];
     return {
       userId: payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'],
       username: payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'],
       role: payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'],
+      supporterId: sid ? Number(sid) : null,
       exp: payload.exp,
     };
   } catch {
     return null;
   }
+}
+
+export function getSupporterId(): number | null {
+  const payload = parseToken();
+  return payload?.supporterId ?? null;
 }
 
 export function isAuthenticated(): boolean {
