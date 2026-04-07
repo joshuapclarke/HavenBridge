@@ -1,3 +1,5 @@
+import type { User } from '../types/models';
+
 const BASE = '/api';
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -46,5 +48,8 @@ export const api = {
   admin: {
     recentActivity: () => request<any[]>('/admin/recent-activity'),
     search: (q: string) => request<any>(`/admin/search?q=${encodeURIComponent(q)}`),
+  },
+  users: {
+    list: () => request<User[]>('/users'), // Add this line
   },
 };
