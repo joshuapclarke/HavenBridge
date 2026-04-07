@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using HavenBridge.Api.Data;
@@ -7,6 +8,7 @@ namespace HavenBridge.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize(Roles = "Admin,Staff")]
 public class UsersController : ControllerBase
 {
     private readonly HavenBridgeContext _db;

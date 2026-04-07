@@ -1,6 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -23,6 +24,16 @@ public class AuthController : ControllerBase
         _config = config;
     }
 
+    private static string? ValidatePasswordStrength(string password)
+    {
+        if (password.Length < 8) return "Password must be at least 8 characters.";
+        if (!Regex.IsMatch(password, "[A-Z]")) return "Password must contain an uppercase letter.";
+        if (!Regex.IsMatch(password, "[a-z]")) return "Password must contain a lowercase letter.";
+        if (!Regex.IsMatch(password, @"\d")) return "Password must contain a number.";
+        if (!Regex.IsMatch(password, @"[^A-Za-z0-9]")) return "Password must contain a special character.";
+        return null;
+    }
+
     public record RegisterRequest(string Username, string Password, string? FirstName, string? LastName);
     public record LoginRequest(string Username, string Password);
     public record ChangePasswordRequest(string CurrentPassword, string NewPassword);
@@ -33,8 +44,9 @@ public class AuthController : ControllerBase
         if (string.IsNullOrWhiteSpace(req.Username) || string.IsNullOrWhiteSpace(req.Password))
             return BadRequest(new { message = "Username and password are required." });
 
-        if (req.Password.Length < 6)
-            return BadRequest(new { message = "Password must be at least 6 characters." });
+        var pwError = ValidatePasswordStrength(req.Password);
+        if (pwError != null)
+            return BadRequest(new { message = pwError });
 
         var exists = await _db.Users.AnyAsync(u => u.Username == req.Username);
         if (exists)
@@ -113,8 +125,9 @@ public class AuthController : ControllerBase
         if (!BCrypt.Net.BCrypt.Verify(req.CurrentPassword, user.PasswordHash))
             return BadRequest(new { message = "Current password is incorrect." });
 
-        if (req.NewPassword.Length < 6)
-            return BadRequest(new { message = "New password must be at least 6 characters." });
+        var newPwError = ValidatePasswordStrength(req.NewPassword);
+        if (newPwError != null)
+            return BadRequest(new { message = newPwError });
 
         user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(req.NewPassword);
         user.NeedPasswordReset = false;

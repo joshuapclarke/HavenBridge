@@ -7,6 +7,7 @@ namespace HavenBridge.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class ImpactController : ControllerBase
 {
     private readonly HavenBridgeContext _db;
