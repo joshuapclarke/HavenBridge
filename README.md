@@ -33,6 +33,7 @@ Launches both the backend API and the frontend dev server in one command. The ap
 |--------|-------------|
 | `.\start.ps1` | Start both backend + frontend |
 | `.\reset-db.ps1` | Delete the local database so it re-seeds from CSVs on next start |
+| `bash reset-db.sh` | As noted above, for Macs |
 | `.\setup.ps1` | First-time install of all dependencies |
 
 ### Manual Start (if you prefer)
