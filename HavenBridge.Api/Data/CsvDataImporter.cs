@@ -82,17 +82,37 @@ public static class CsvDataImporter
 
     private static async Task ImportUsers(HavenBridgeContext db, string path)
     {
+        var defaultHash = BCrypt.Net.BCrypt.HashPassword("password123");
+
         foreach (var f in (await File.ReadAllLinesAsync(path)).Skip(1).Where(l => !string.IsNullOrWhiteSpace(l)).Select(ParseCsvLine))
         {
+            var rawHash = f[4];
+            var passwordHash = rawHash == "PLACEHOLDER_HASH" ? defaultHash : rawHash;
+
             db.Users.Add(new User
             {
                 UserId = ParseInt(f[0]), RoleId = ParseInt(f[1]),
                 SupporterId = ParseIntNull(f[2]),
-                Username = f[3], PasswordHash = f[4],
+                Username = f[3], PasswordHash = passwordHash,
                 UserFirstName = NullIfEmpty(f[5]), UserLastName = NullIfEmpty(f[6]),
                 IsSocialWorker = ParseBool(f[7])
             });
         }
+
+        // Seed an admin user if one doesn't already exist in the CSV
+        var maxId = (await File.ReadAllLinesAsync(path)).Skip(1).Where(l => !string.IsNullOrWhiteSpace(l))
+            .Select(l => ParseInt(ParseCsvLine(l)[0])).DefaultIfEmpty(0).Max();
+
+        db.Users.Add(new User
+        {
+            UserId = maxId + 1,
+            RoleId = 1,
+            Username = "admin",
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123"),
+            UserFirstName = "System",
+            UserLastName = "Admin",
+            IsSocialWorker = false
+        });
     }
 
     private static async Task ImportSafehouses(HavenBridgeContext db, string path)

@@ -39,7 +39,7 @@ export default function LandingPage() {
               to="/login"
               className="ml-2 inline-flex items-center rounded-lg bg-white/15 backdrop-blur-sm border border-white/25 px-4 py-2 text-sm font-semibold text-white hover:bg-white/25 transition-colors"
             >
-              Staff Login
+              Sign In
             </Link>
           </div>
         </div>
@@ -79,7 +79,7 @@ export default function LandingPage() {
               to="/login"
               className="inline-flex items-center rounded-xl border-2 border-white/60 bg-white/10 backdrop-blur-sm px-7 py-3.5 text-base font-semibold text-white hover:bg-white/20 hover:border-white/80 transition-all"
             >
-              Staff Login
+              Sign In
             </Link>
           </div>
         </div>
@@ -152,7 +152,7 @@ export default function LandingPage() {
               to="/login"
               className="inline-flex items-center rounded-xl border-2 border-white/50 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10 transition-colors"
             >
-              Staff Portal
+              Sign In
             </Link>
           </div>
         </div>
@@ -168,7 +168,7 @@ export default function LandingPage() {
           <div className="flex items-center gap-6 text-sm text-gray-500">
             <Link to="/impact" className="hover:text-gray-900 transition-colors">Impact</Link>
             <Link to="/privacy" className="hover:text-gray-900 transition-colors">Privacy</Link>
-            <Link to="/login" className="hover:text-gray-900 transition-colors">Staff Login</Link>
+            <Link to="/login" className="hover:text-gray-900 transition-colors">Sign In</Link>
           </div>
           <p className="text-xs text-gray-400">
             © {new Date().getFullYear()} HavenBridge

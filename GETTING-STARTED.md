@@ -105,13 +105,30 @@ git pull
 |-----|-------------|---------------|
 | http://localhost:5173 | Everyone (welcome page) | No |
 | http://localhost:5173/impact | Everyone (public impact data) | No |
-| http://localhost:5173/login | Staff | — |
-| http://localhost:5173/dashboard | Staff (after login) | Yes |
-| http://localhost:5173/cases | Staff — case management | Yes |
-| http://localhost:5173/donors | Staff — donor management | Yes |
-| http://localhost:5173/reports | Staff — reports & analytics | Yes |
+| http://localhost:5173/login | All users | — |
+| http://localhost:5173/register | New donors | — |
+| http://localhost:5173/dashboard | Staff / Admin | Yes |
+| http://localhost:5173/cases | Staff / Admin — case management | Yes |
+| http://localhost:5173/donors | Staff / Admin — donor management | Yes |
+| http://localhost:5173/reports | Staff / Admin — reports & analytics | Yes |
+| http://localhost:5173/admin | Admin — user management & tools | Yes |
+| http://localhost:5173/donor-portal | Donors — donation history & impact | Yes |
 
-**Login:** Enter any email and password. There is no real authentication yet — it just sets a local flag.
+## Test Accounts
+
+The database is seeded with the following accounts for development and testing:
+
+| Username | Password | Role | Notes |
+|----------|----------|------|-------|
+| `admin` | `admin123` | Admin | Full access including user management |
+| `sw01` through `sw20` | `password123` | Staff | 20 social worker accounts |
+| *(register your own)* | *(your choice)* | Donor | New registrations default to Donor |
+
+### Role Permissions
+
+- **Donor** — Donor Portal only (donation history, impact)
+- **Staff** — Everything Donor can do, plus Dashboard, Cases, Donors, Reports
+- **Admin** — Everything Staff can do, plus Admin Portal with user role management
 
 ---
 

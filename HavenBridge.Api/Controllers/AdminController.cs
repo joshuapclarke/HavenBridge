@@ -1,3 +1,5 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using HavenBridge.Api.Data;
@@ -6,6 +8,7 @@ namespace HavenBridge.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize(Roles = "Admin")]
 public class AdminController : ControllerBase
 {
     private readonly HavenBridgeContext _db;
@@ -62,5 +65,46 @@ public class AdminController : ControllerBase
             .ToListAsync();
 
         return Ok(new { residents, supporters });
+    }
+
+    [HttpGet("users")]
+    public async Task<ActionResult> GetUsers()
+    {
+        var users = await _db.Users
+            .Include(u => u.Role)
+            .OrderBy(u => u.UserId)
+            .Select(u => new
+            {
+                u.UserId,
+                u.Username,
+                u.UserFirstName,
+                u.UserLastName,
+                u.RoleId,
+                Role = u.Role!.Description
+            })
+            .ToListAsync();
+
+        return Ok(users);
+    }
+
+    public record UpdateRoleRequest(int RoleId);
+
+    [HttpPut("users/{id}/role")]
+    public async Task<ActionResult> UpdateUserRole(int id, [FromBody] UpdateRoleRequest req)
+    {
+        if (req.RoleId < 1 || req.RoleId > 3)
+            return BadRequest(new { message = "Role ID must be 1 (Admin), 2 (Staff), or 3 (Donor)." });
+
+        var currentUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        if (id == currentUserId)
+            return BadRequest(new { message = "You cannot change your own role." });
+
+        var user = await _db.Users.FindAsync(id);
+        if (user == null) return NotFound(new { message = "User not found." });
+
+        user.RoleId = req.RoleId;
+        await _db.SaveChangesAsync();
+
+        return Ok(new { message = "Role updated successfully." });
     }
 }

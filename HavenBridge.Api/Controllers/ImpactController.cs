@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using HavenBridge.Api.Data;
@@ -12,6 +13,7 @@ public class ImpactController : ControllerBase
     public ImpactController(HavenBridgeContext db) => _db = db;
 
     [HttpGet("snapshots")]
+    [AllowAnonymous]
     public async Task<ActionResult> GetPublished()
     {
         var snapshots = await _db.PublicImpactSnapshots
@@ -22,6 +24,7 @@ public class ImpactController : ControllerBase
         return Ok(snapshots);
     }
 
+    [Authorize]
     [HttpGet("donor/{supporterId}")]
     public async Task<ActionResult> GetDonorImpact(int supporterId)
     {
@@ -48,6 +51,7 @@ public class ImpactController : ControllerBase
         return Ok(new { totalGiven, donationCount, allocations, campaigns });
     }
 
+    [AllowAnonymous]
     [HttpGet("overview")]
     public async Task<ActionResult> GetOverview()
     {

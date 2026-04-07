@@ -1,15 +1,34 @@
+import { getToken } from './auth';
+
 const BASE = '/api';
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  const token = getToken();
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
   const res = await fetch(`${BASE}${path}`, {
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     ...init,
   });
-  if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.message ?? `API ${res.status}: ${res.statusText}`);
+  }
   return res.json();
 }
 
 export const api = {
+  auth: {
+    register: (data: { username: string; password: string; firstName?: string; lastName?: string }) =>
+      request<{ token: string; user: any }>('/auth/register', { method: 'POST', body: JSON.stringify(data) }),
+    login: (data: { username: string; password: string }) =>
+      request<{ token: string; user: any }>('/auth/login', { method: 'POST', body: JSON.stringify(data) }),
+    me: () => request<any>('/auth/me'),
+  },
   residents: {
     list: () => request<any[]>('/residents'),
     get: (id: number) => request<any>(`/residents/${id}`),
@@ -46,5 +65,8 @@ export const api = {
   admin: {
     recentActivity: () => request<any[]>('/admin/recent-activity'),
     search: (q: string) => request<any>(`/admin/search?q=${encodeURIComponent(q)}`),
+    users: () => request<any[]>('/admin/users'),
+    updateRole: (userId: number, roleId: number) =>
+      request<any>(`/admin/users/${userId}/role`, { method: 'PUT', body: JSON.stringify({ roleId }) }),
   },
 };
