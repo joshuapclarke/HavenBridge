@@ -18,7 +18,7 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
     ?? "Server=localhost;Port=3306;Database=havenbridge;User=root;Password=HavenBridge2026!;";
 
 builder.Services.AddDbContext<HavenBridgeContext>(options =>
-    options.UseMySQL(connectionString));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 var jwtKey = builder.Configuration["Jwt:Key"]!;
 builder.Services.AddAuthentication(options =>

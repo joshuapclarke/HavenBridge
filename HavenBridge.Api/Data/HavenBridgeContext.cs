@@ -27,7 +27,13 @@ public class HavenBridgeContext : DbContext
     public DbSet<PublicImpactSnapshot> PublicImpactSnapshots => Set<PublicImpactSnapshot>();
     public DbSet<Role> Roles => Set<Role>();
     public DbSet<User> Users => Set<User>();
-
+    
+    protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+    {
+        base.ConfigureConventions(configurationBuilder);
+        // "Whenever you see a 'bool' in ANY of my C# models, map it to a 'byte' in the database."
+        configurationBuilder.Properties<bool>().HaveConversion<byte>();
+    }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
