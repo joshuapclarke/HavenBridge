@@ -99,8 +99,18 @@ public class AuthController : ControllerBase
     public async Task<ActionResult> Login([FromBody] LoginRequest req)
     {
         var user = await _db.Users.Include(u => u.Role).FirstOrDefaultAsync(u => u.Username == req.Username);
-        if (user == null || !BCrypt.Net.BCrypt.Verify(req.Password, user.PasswordHash))
+        if (user == null)
             return Unauthorized(new { message = "Invalid username or password." });
+
+        try
+        {
+            if (!BCrypt.Net.BCrypt.Verify(req.Password, user.PasswordHash))
+                return Unauthorized(new { message = "Invalid username or password." });
+        }
+        catch
+        {
+            return Unauthorized(new { message = "Invalid username or password." });
+        }
 
         var token = GenerateToken(user, user.Role!.Description);
 
