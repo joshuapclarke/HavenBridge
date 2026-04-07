@@ -15,18 +15,26 @@ Install MySQL Server 8+ and make sure the `mysql` command-line client is in your
 **Windows (MySQL Installer):**
 1. Download the [MySQL Installer](https://dev.mysql.com/downloads/installer/)
 2. Choose "Developer Default" or "Server only"
-3. Set a root password during setup (the app defaults to `HavenBridge2026!`)
+3. Set a root password during setup (the app defaults to `admin`)
 4. Make sure "Add MySQL to PATH" is checked, or add it manually:
    - Typical path: `C:\Program Files\MySQL\MySQL Server 8.x\bin`
 
+**macOS (Homebrew):**
+
+```bash
+brew install mysql
+brew services start mysql
+mysql_secure_installation   # set a root password
+```
+
 **Verify it's working:**
 
-```powershell
+```bash
 mysql --version
 mysql -u root -p -e "SELECT 1"
 ```
 
-If your root password differs from `HavenBridge2026!`, update the connection string in `HavenBridge.Api/appsettings.json`:
+If your root password differs from `admin`, update the connection string in `HavenBridge.Api/appsettings.json`:
 
 ```json
 "ConnectionStrings": {
@@ -41,8 +49,18 @@ If your root password differs from `HavenBridge2026!`, update the connection str
 1. Clone the repo and open a terminal in the `HavenBridge` folder
 2. Run:
 
+**Windows (PowerShell):**
+
 ```powershell
 .\setup.ps1
+```
+
+**macOS / Linux:**
+
+```bash
+chmod +x *.sh        # one-time: make scripts executable
+./reset-db.sh        # create the database
+cd frontend && npm install && cd ..
 ```
 
 This checks all prerequisites, creates the `havenbridge` MySQL database, installs .NET and frontend dependencies.
@@ -51,8 +69,16 @@ This checks all prerequisites, creates the `havenbridge` MySQL database, install
 
 ## Day-to-Day: Start the App
 
+**Windows (PowerShell):**
+
 ```powershell
 .\start.ps1
+```
+
+**macOS / Linux:**
+
+```bash
+./start.sh
 ```
 
 This starts both the backend and frontend. Open **http://localhost:5173** in your browser.
@@ -67,12 +93,23 @@ To stop, press **Ctrl+C**.
 
 ### If the change is code only (no database changes)
 
+**Windows:**
+
 ```powershell
 git pull
 .\start.ps1
 ```
 
+**macOS / Linux:**
+
+```bash
+git pull
+./start.sh
+```
+
 ### If the change involves database/model/CSV updates
+
+**Windows:**
 
 ```powershell
 git pull
@@ -80,7 +117,13 @@ git pull
 .\start.ps1
 ```
 
-`reset-db.ps1` drops and recreates the MySQL database so it gets rebuilt from the latest CSV seed files on next startup.
+**macOS / Linux:**
+
+```bash
+git pull
+./reset-db.sh
+./start.sh
+```
 
 **How do I know if the DB changed?** Check if any files in `HavenBridge.Api/SeedData/`, `HavenBridge.Api/Models/`, or `HavenBridge.Api/Data/` were modified in the pull.
 
@@ -88,14 +131,14 @@ git pull
 
 ## Quick Reference
 
-| I want to... | Run this |
-|--------------|----------|
-| Start the app | `.\start.ps1` |
-| Stop the app | `Ctrl+C` in the terminal |
-| Reset the database | `.\reset-db.ps1` |
-| Install dependencies after a fresh clone | `.\setup.ps1` |
-| Start backend only | `cd HavenBridge.Api` then `dotnet run` |
-| Start frontend only | `cd frontend` then `npm run dev` |
+| I want to... | Windows | macOS / Linux |
+|--------------|---------|---------------|
+| Start the app | `.\start.ps1` | `./start.sh` |
+| Stop the app | `Ctrl+C` | `Ctrl+C` |
+| Reset the database | `.\reset-db.ps1` | `./reset-db.sh` |
+| Install deps (fresh clone) | `.\setup.ps1` | `chmod +x *.sh && ./reset-db.sh` |
+| Start backend only | `cd HavenBridge.Api` then `dotnet run` | Same |
+| Start frontend only | `cd frontend` then `npm run dev` | Same |
 
 ---
 
@@ -138,6 +181,7 @@ The database is seeded with the following accounts for development and testing:
 |---------|-----|
 | `mysql` not found | Add MySQL's `bin` folder to your system PATH |
 | Access denied for root | Check your password in `appsettings.json` matches your MySQL root password |
-| Backend crashes on start | Make sure MySQL is running: `net start MySQL80` (Windows) |
-| Tables are empty | Run `.\reset-db.ps1` then `.\start.ps1` to re-seed |
-| Port 3306 in use | Another MySQL instance may be running; check with `netstat -an | findstr 3306` |
+| Backend crashes on start | Make sure MySQL is running: `net start MySQL80` (Windows) / `brew services start mysql` (macOS) |
+| Tables are empty | Run `.\reset-db.ps1` / `./reset-db.sh` then start the app to re-seed |
+| Port 3306 in use | Another MySQL instance may be running; check with `netstat -an | findstr 3306` (Windows) or `lsof -i :3306` (macOS) |
+| Permission denied on .sh scripts | Run `chmod +x *.sh` in the HavenBridge folder |
