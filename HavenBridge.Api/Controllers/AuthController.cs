@@ -71,9 +71,31 @@ public class AuthController : ControllerBase
         };
 
         _db.Users.Add(user);
-        await _db.SaveChangesAsync();
+        try
+        {
+            await _db.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            var message = ex.InnerException?.Message ?? ex.Message;
+            if (message.Contains("duplicate", StringComparison.OrdinalIgnoreCase) ||
+                message.Contains("unique", StringComparison.OrdinalIgnoreCase))
+            {
+                return Conflict(new { message = "Username is already taken." });
+            }
 
-        var token = GenerateToken(user, donorRole.Description);
+            return StatusCode(500, new { message = "Unable to create user record.", detail = message });
+        }
+
+        string token;
+        try
+        {
+            token = GenerateToken(user, donorRole.Description);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "User was created, but token generation failed.", detail = ex.Message });
+        }
 
         return Ok(new
         {
