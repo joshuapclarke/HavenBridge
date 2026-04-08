@@ -129,7 +129,7 @@ public class AdminController : ControllerBase
             UserFirstName = req.FirstName,
             UserLastName = req.LastName,
             IsSocialWorker = req.RoleId == 2,
-            NeedPasswordReset = true,
+            NeedPasswordReset = false,
             SupporterId = null
         };
 

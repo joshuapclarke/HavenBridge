@@ -67,7 +67,7 @@ public class AuthController : ControllerBase
             UserFirstName = req.FirstName,
             UserLastName = req.LastName,
             IsSocialWorker = false,
-            NeedPasswordReset = true
+            NeedPasswordReset = false
         };
 
         _db.Users.Add(user);
