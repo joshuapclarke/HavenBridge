@@ -4,7 +4,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using HavenBridge.Api.Data;
 
+DotNetEnv.Env.Load();
+
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Configuration.AddEnvironmentVariables();
 
 builder.Services.AddControllers()
     .AddJsonOptions(o =>
