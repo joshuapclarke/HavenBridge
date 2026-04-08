@@ -7,7 +7,7 @@ import PublicFooter from '../components/PublicFooter';
 import { CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/solid';
 
 const PW_RULES = [
-  { key: 'length', label: 'At least 8 characters', test: (p: string) => p.length >= 8 },
+  { key: 'length', label: 'At least 14 characters', test: (p: string) => p.length >= 14 },
   { key: 'upper', label: 'One uppercase letter', test: (p: string) => /[A-Z]/.test(p) },
   { key: 'lower', label: 'One lowercase letter', test: (p: string) => /[a-z]/.test(p) },
   { key: 'number', label: 'One number', test: (p: string) => /\d/.test(p) },

@@ -26,7 +26,7 @@ public class AuthController : ControllerBase
 
     private static string? ValidatePasswordStrength(string password)
     {
-        if (password.Length < 8) return "Password must be at least 8 characters.";
+        if (password.Length < 14) return "Password must be at least 14 characters.";
         if (!Regex.IsMatch(password, "[A-Z]")) return "Password must contain an uppercase letter.";
         if (!Regex.IsMatch(password, "[a-z]")) return "Password must contain a lowercase letter.";
         if (!Regex.IsMatch(password, @"\d")) return "Password must contain a number.";
