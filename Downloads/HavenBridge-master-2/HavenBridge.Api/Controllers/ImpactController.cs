@@ -63,4 +63,20 @@ public class ImpactController : ControllerBase
 
         return Ok(new { totalResidents, totalSessions, totalDonations, activeSafehouses });
     }
+
+    [AllowAnonymous]
+    [HttpGet("db-check")]
+    public async Task<ActionResult> DbCheck()
+    {
+        try
+        {
+            var tables = await _db.Database.SqlQueryRaw<string>(
+                "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE'").ToListAsync();
+            return Ok(new { ok = true, tables });
+        }
+        catch (Exception ex)
+        {
+            return Ok(new { ok = false, error = ex.Message, inner = ex.InnerException?.Message });
+        }
+    }
 }
