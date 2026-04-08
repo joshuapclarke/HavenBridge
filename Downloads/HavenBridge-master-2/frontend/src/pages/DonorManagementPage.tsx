@@ -29,6 +29,7 @@ export default function DonorManagementPage() {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [donorPage, setDonorPage] = useState(1);
   const DONOR_PAGE_SIZE = 15;
+  const [mlDonorValue, setMlDonorValue] = useState<any>(null);
   const [editSupporterForm, setEditSupporterForm] = useState<Record<string, any>>({});
   const [newSupporter, setNewSupporter] = useState({ supporterType: 'Individual', firstName: '', lastName: '', displayName: '', organizationName: '', email: '', phone: '', country: 'Philippines', region: '', acquisitionChannel: 'Direct' });
   const [donationForm, setDonationForm] = useState({ donationType: 'Monetary', amount: 0, campaignName: '', currencyCode: 'PHP', isRecurring: false });
@@ -120,10 +121,25 @@ export default function DonorManagementPage() {
 
   const selectDonor = async (s: Supporter) => {
     setSelected(s);
+    setMlDonorValue(null);
     const detail = await api.supporters.get(s.supporterId);
     setSelected(detail);
     const imp = await api.impact.donorImpact(s.supporterId);
     setImpact(imp);
+
+    const donations = detail.donations ?? [];
+    const amounts = donations.map((d: any) => d.amount).filter((a: number) => a > 0);
+    const firstDate = detail.firstDonationDate ? new Date(detail.firstDonationDate) : new Date();
+    const ageDays = Math.max(Math.floor((Date.now() - firstDate.getTime()) / 86400000), 1);
+    const features = {
+      total_donations: donations.length,
+      monetary_donations: donations.filter((d: any) => d.donationType === 'Monetary').length,
+      avg_amount: amounts.length ? amounts.reduce((a: number, b: number) => a + b, 0) / amounts.length : 0,
+      max_amount: amounts.length ? Math.max(...amounts) : 0,
+      is_recurring_donor: donations.some((d: any) => d.isRecurring) ? 1 : 0,
+      account_age_days: ageDays,
+    };
+    api.ml.donorValue(features).then(r => { if (r) setMlDonorValue(r); });
   };
 
   if (loading) return <LoadingSpinner />;
@@ -263,6 +279,31 @@ export default function DonorManagementPage() {
                       ))}
                     </div>
                   )}
+                </div>
+              )}
+
+              {mlDonorValue && (
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+                  <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                    ML Insights
+                    {!mlDonorValue.modelLoaded && <span className="text-xs font-normal text-gray-400 italic">rule-based</span>}
+                  </h4>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Est. Lifetime Value</span>
+                      <span className="font-semibold tabular-nums">₱{mlDonorValue.predictedLifetimeValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-500">Engagement Tier</span>
+                      <span className={`px-2.5 py-0.5 rounded-lg text-xs font-semibold ${
+                        mlDonorValue.engagementTier === 'HIGH' ? 'bg-emerald-100 text-emerald-800' :
+                        mlDonorValue.engagementTier === 'MEDIUM' ? 'bg-blue-100 text-blue-800' :
+                        'bg-gray-100 text-gray-600'
+                      }`}>
+                        {mlDonorValue.engagementTier}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               )}
 

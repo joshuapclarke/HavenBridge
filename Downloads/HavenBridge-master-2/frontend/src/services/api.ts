@@ -2,6 +2,21 @@ import { getToken } from './auth';
 import type { User } from '../types/models';
 
 const BASE = import.meta.env.VITE_API_URL ?? 'https://intex-backend-one-two-b8chggdma6buaee7.francecentral-01.azurewebsites.net/api';
+const ML_BASE = import.meta.env.VITE_ML_API_URL ?? 'http://localhost:5001';
+
+async function mlPost<T>(path: string, body: object): Promise<T | null> {
+  try {
+    const res = await fetch(`${ML_BASE}${path}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) return null;
+    return res.json();
+  } catch {
+    return null;
+  }
+}
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
@@ -85,6 +100,11 @@ export const api = {
       request<any>(`/admin/users/${userId}/require-password-reset`, { method: 'PUT', body: JSON.stringify({ needPasswordReset }) }),
   },
   users: {
-    list: () => request<User[]>('/users'), 
+    list: () => request<User[]>('/users'),
+  },
+  ml: {
+    residentRisk: (features: object) => mlPost<any>('/predict/resident-risk', features),
+    reintegration: (features: object) => mlPost<any>('/predict/reintegration', features),
+    donorValue: (features: object) => mlPost<any>('/predict/donor-value', features),
   },
 };

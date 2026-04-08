@@ -32,6 +32,8 @@ export default function CaseDashboardPage() {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [residentPage, setResidentPage] = useState(1);
   const RESIDENT_PAGE_SIZE = 20;
+  const [mlRisk, setMlRisk] = useState<any>(null);
+  const [mlReintegration, setMlReintegration] = useState<any>(null);
 
   const [showDetails, setShowDetails] = useState(false);
   const [showSessionForm, setShowSessionForm] = useState(false);
@@ -133,9 +135,45 @@ export default function CaseDashboardPage() {
   const residentTotalPages = Math.ceil(filteredResidents.length / RESIDENT_PAGE_SIZE);
 
   const selectResident = async (id: number) => {
+    setMlRisk(null);
+    setMlReintegration(null);
     const detail = await api.residents.get(id);
     setSelected(detail);
     setActiveTab('sessions');
+
+    const riskFeatures = {
+      sub_cat_trafficked: detail.subCatTrafficked ? 1 : 0,
+      sub_cat_physical_abuse: detail.subCatPhysicalAbuse ? 1 : 0,
+      sub_cat_sexual_abuse: detail.subCatSexualAbuse ? 1 : 0,
+      sub_cat_at_risk: detail.subCatAtRisk ? 1 : 0,
+      has_special_needs: detail.hasSpecialNeeds ? 1 : 0,
+      is_pwd: detail.isPwd ? 1 : 0,
+      family_solo_parent: detail.familySoloParent ? 1 : 0,
+      family_informal_settler: detail.familyInformalSettler ? 1 : 0,
+      total_sessions: detail.processRecordings?.length ?? 0,
+      concerns_flagged_count: detail.processRecordings?.filter((s: any) => s.concernsFlagged).length ?? 0,
+      total_incidents: detail.incidentReports?.length ?? 0,
+      unresolved_count: detail.incidentReports?.filter((i: any) => !i.resolved).length ?? 0,
+      high_severity_count: detail.incidentReports?.filter((i: any) => i.severity === 'High' || i.severity === 'Critical').length ?? 0,
+      avg_health_score: detail.healthRecords?.length
+        ? detail.healthRecords.reduce((s: number, h: any) => s + (h.generalHealthScore ?? 5), 0) / detail.healthRecords.length : 5,
+      avg_progress: detail.educationRecords?.length
+        ? detail.educationRecords.reduce((s: number, e: any) => s + (e.progressPercent ?? 50), 0) / detail.educationRecords.length : 50,
+    };
+
+    const reintFeatures = {
+      ...riskFeatures,
+      total_visits: detail.homeVisitations?.length ?? 0,
+      total_plans: detail.interventionPlans?.length ?? 0,
+      completed_plans: detail.interventionPlans?.filter((p: any) => p.status === 'Completed').length ?? 0,
+      plan_completion_rate: detail.interventionPlans?.length
+        ? (detail.interventionPlans.filter((p: any) => p.status === 'Completed').length / detail.interventionPlans.length) : 0,
+      avg_attendance: detail.educationRecords?.length
+        ? detail.educationRecords.reduce((s: number, e: any) => s + (e.attendanceRate ?? 0), 0) / detail.educationRecords.length : 0,
+    };
+
+    api.ml.residentRisk(riskFeatures).then(r => { if (r) setMlRisk(r); });
+    api.ml.reintegration(reintFeatures).then(r => { if (r) setMlReintegration(r); });
   };
 
   if (loading) return <LoadingSpinner />;
@@ -280,6 +318,36 @@ export default function CaseDashboardPage() {
                     </div>
                   </div>
                 </div>
+
+                {/* ML Predictions */}
+                {(mlRisk || mlReintegration) && (
+                  <div className="px-6 pb-4 flex flex-wrap gap-2">
+                    {mlRisk && (
+                      <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold ${
+                        mlRisk.riskLevel === 'Critical' ? 'bg-red-100 text-red-800' :
+                        mlRisk.riskLevel === 'High' ? 'bg-orange-100 text-orange-800' :
+                        mlRisk.riskLevel === 'Medium' ? 'bg-amber-100 text-amber-800' :
+                        'bg-emerald-100 text-emerald-800'
+                      }`}>
+                        <span className="opacity-60">ML Risk:</span> {mlRisk.riskLevel}
+                        <span className="opacity-50 font-normal">({Math.round(mlRisk.confidenceScore * 100)}%)</span>
+                        {!mlRisk.modelLoaded && <span className="opacity-40 font-normal italic">rule-based</span>}
+                      </div>
+                    )}
+                    {mlReintegration && (
+                      <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold ${
+                        mlReintegration.recommendedAction === 'READY' ? 'bg-emerald-100 text-emerald-800' :
+                        mlReintegration.recommendedAction === 'PROGRESSING' ? 'bg-blue-100 text-blue-800' :
+                        mlReintegration.recommendedAction === 'IN DEVELOPMENT' ? 'bg-amber-100 text-amber-800' :
+                        'bg-red-100 text-red-800'
+                      }`}>
+                        <span className="opacity-60">Reintegration:</span> {mlReintegration.recommendedAction}
+                        <span className="opacity-50 font-normal">({Math.round(mlReintegration.readinessScore * 100)}%)</span>
+                        {!mlReintegration.modelLoaded && <span className="opacity-40 font-normal italic">rule-based</span>}
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Expandable Full Profile */}
                 <button
