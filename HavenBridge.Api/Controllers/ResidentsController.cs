@@ -25,7 +25,7 @@ public class ResidentsController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<Resident>> Get(int id)
+    public async Task<ActionResult<Resident>> Get(float id)
     {
         var resident = await _db.Residents
             .Include(r => r.Safehouse)
