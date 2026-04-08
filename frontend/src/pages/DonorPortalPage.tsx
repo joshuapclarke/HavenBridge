@@ -7,6 +7,8 @@ import type { Supporter, DonorImpact, PublicImpactSnapshot } from '../types/mode
 import { ArrowDownTrayIcon, ArrowPathIcon, GiftIcon, UserPlusIcon } from '@heroicons/react/24/outline';
 import usePageTitle from '../hooks/usePageTitle';
 
+const currencySymbol: Record<string, string> = { USD: '$', PHP: '₱', SGD: 'S$', CAD: 'C$' };
+
 export default function DonorPortalPage() {
   usePageTitle('Donor Portal');
   const [donor, setDonor] = useState<Supporter | null>(null);
@@ -167,7 +169,7 @@ export default function DonorPortalPage() {
                   {donor.donations.map(d => (
                     <tr key={d.donationId} className="hover:bg-gray-50/60 transition-colors">
                       <td className="px-6 py-4 text-sm text-gray-900">{d.donationDate}</td>
-                      <td className="px-6 py-4 text-sm text-right font-medium text-gray-900 tabular-nums">{d.currencyCode} {d.amount.toLocaleString()}</td>
+                      <td className="px-6 py-4 text-sm text-right font-medium text-gray-900 tabular-nums">{currencySymbol[d.currencyCode] ?? d.currencyCode}{d.amount.toLocaleString()}</td>
                       <td className="px-6 py-4 text-sm text-gray-600">{d.campaignName ?? '—'}</td>
                       <td className="px-6 py-4 text-sm">
                         {d.isRecurring

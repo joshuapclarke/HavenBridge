@@ -16,6 +16,8 @@ import {
   PencilSquareIcon,
 } from '@heroicons/react/24/outline';
 
+const currencySymbol: Record<string, string> = { USD: '$', PHP: '₱', SGD: 'S$', CAD: 'C$' };
+
 export default function DonorManagementPage() {
   usePageTitle('Donor Management');
   const [supporters, setSupporters] = useState<Supporter[]>([]);
@@ -216,7 +218,7 @@ export default function DonorManagementPage() {
                   {selected.donations?.map(d => (
                     <div key={d.donationId} className="px-5 py-3 flex items-center justify-between hover:bg-gray-50/50 transition-colors">
                       <div>
-                        <p className="text-sm font-medium text-gray-900 tabular-nums">{d.currencyCode} {d.amount.toLocaleString()}</p>
+                        <p className="text-sm font-medium text-gray-900 tabular-nums">{currencySymbol[d.currencyCode] ?? d.currencyCode}{d.amount.toLocaleString()}</p>
                         <p className="text-xs text-gray-500">{d.donationDate} {d.campaignName && `· ${d.campaignName}`}</p>
                       </div>
                       {d.isRecurring && <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-lg font-medium">Recurring</span>}
