@@ -15,13 +15,20 @@ public class ResidentsController : ControllerBase
     public ResidentsController(HavenBridgeContext db) => _db = db;
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Resident>>> GetAll()
+    public async Task<ActionResult> GetAll([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
     {
-        return await _db.Residents
+        var query = _db.Residents
             .Include(r => r.Safehouse)
             .OrderBy(r => r.CaseStatus == "Active" ? 0 : 1)
-            .ThenByDescending(r => r.DateOfAdmission)
+            .ThenByDescending(r => r.DateOfAdmission);
+
+        var totalCount = await query.CountAsync();
+        var items = await query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync();
+
+        return Ok(new { items, totalCount, page, pageSize });
     }
 
     [HttpGet("{id}")]

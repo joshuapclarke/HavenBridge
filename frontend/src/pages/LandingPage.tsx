@@ -9,11 +9,13 @@ import {
   XMarkIcon,
 } from '@heroicons/react/24/outline';
 import { getToken, getUserName, hasRole } from '../services/auth';
+import usePageTitle from '../hooks/usePageTitle';
 
 const HERO_IMAGE =
   'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=80&auto=format&fit=crop';
 
 export default function LandingPage() {
+  usePageTitle('Home');
   const [menuOpen, setMenuOpen] = useState(false);
   const isLoggedIn = !!getToken();
   const username = isLoggedIn ? getUserName() : null;

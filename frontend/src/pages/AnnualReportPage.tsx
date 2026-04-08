@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { api } from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { DocumentTextIcon, PrinterIcon } from '@heroicons/react/24/outline';
+import usePageTitle from '../hooks/usePageTitle';
 
 interface AnnualData {
   year: number;
@@ -43,6 +44,7 @@ interface AnnualData {
 }
 
 export default function AnnualReportPage() {
+  usePageTitle('Annual Report');
   const [data, setData] = useState<AnnualData | null>(null);
   const [year, setYear] = useState(new Date().getFullYear());
   const [loading, setLoading] = useState(true);

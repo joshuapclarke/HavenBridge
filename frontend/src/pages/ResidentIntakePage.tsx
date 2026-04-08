@@ -1,8 +1,10 @@
 import { ResidentIntakeForm } from '../components/ResidentIntakeForm';
 import { Link } from 'react-router-dom';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
+import usePageTitle from '../hooks/usePageTitle';
 
 export const ResidentIntakePage = () => {
+  usePageTitle('New Resident Intake');
   return (
     <div className="max-w-[1000px] mx-auto px-6 py-10">
       <div className="mb-8 flex items-start justify-between">

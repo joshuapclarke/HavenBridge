@@ -15,12 +15,19 @@ public class SupportersController : ControllerBase
     public SupportersController(HavenBridgeContext db) => _db = db;
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Supporter>>> GetAll()
+    public async Task<ActionResult> GetAll([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
     {
-        return await _db.Supporters
+        var query = _db.Supporters
             .Include(s => s.Donations)
-            .OrderBy(s => s.DisplayName)
+            .OrderBy(s => s.DisplayName);
+
+        var totalCount = await query.CountAsync();
+        var items = await query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync();
+
+        return Ok(new { items, totalCount, page, pageSize });
     }
 
     [HttpGet("{id}")]

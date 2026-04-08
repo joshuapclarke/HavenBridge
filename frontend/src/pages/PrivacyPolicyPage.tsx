@@ -3,10 +3,12 @@ import { ArrowLeftIcon, ShieldCheckIcon } from '@heroicons/react/24/outline';
 import PublicNav from '../components/PublicNav';
 import PublicFooter from '../components/PublicFooter';
 import { isAuthenticated, hasRole } from '../services/auth';
+import usePageTitle from '../hooks/usePageTitle';
 
 const LAST_UPDATED = 'April 6, 2026';
 
 export default function PrivacyPolicyPage() {
+  usePageTitle('Privacy Policy');
   const authed = isAuthenticated();
   const backTo = authed ? (hasRole('Staff') ? '/dashboard' : '/donor-portal') : '/welcome';
 

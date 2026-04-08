@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { api } from '../services/api';
 import SummaryCard from '../components/SummaryCard';
 import LoadingSpinner from '../components/LoadingSpinner';
+import usePageTitle from '../hooks/usePageTitle';
 import type { ImpactOverview, SupporterSummary, AlertsData } from '../types/models';
 import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
@@ -199,6 +200,7 @@ export default function ReportsPage() {
   const [charts, setCharts] = useState<ChartData | null>(null);
   const [mlPipelines, setMlPipelines] = useState<MlPipelineSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  usePageTitle('Reports');
 
   useEffect(() => {
     Promise.allSettled([

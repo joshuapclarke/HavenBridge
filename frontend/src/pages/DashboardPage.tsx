@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { api } from '../services/api';
 import SummaryCard from '../components/SummaryCard';
 import StatusBadge from '../components/StatusBadge';
+import usePageTitle from '../hooks/usePageTitle';
 import LoadingSpinner from '../components/LoadingSpinner';
 import type { ImpactOverview, RecentActivity, Safehouse } from '../types/models';
 import {
@@ -32,6 +33,7 @@ export default function DashboardPage() {
   const [safehouses, setSafehouses] = useState<Safehouse[]>([]);
   const [conferences, setConferences] = useState<UpcomingConference[]>([]);
   const [loading, setLoading] = useState(true);
+  usePageTitle('Dashboard');
 
   useEffect(() => {
     Promise.all([

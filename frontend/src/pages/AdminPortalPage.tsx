@@ -3,6 +3,8 @@ import { api } from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 import SummaryCard from '../components/SummaryCard';
 import type { ImpactOverview } from '../types/models';
+import Pagination from '../components/Pagination';
+import usePageTitle from '../hooks/usePageTitle';
 import {
   MagnifyingGlassIcon,
   UsersIcon,
@@ -42,6 +44,7 @@ const ROLE_OPTIONS = [
 ];
 
 export default function AdminPortalPage() {
+  usePageTitle('Admin');
   const [overview, setOverview] = useState<ImpactOverview | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -53,6 +56,9 @@ export default function AdminPortalPage() {
   const [resetUpdating, setResetUpdating] = useState<number | null>(null);
   const [deleteUpdating, setDeleteUpdating] = useState<number | null>(null);
   const [creatingUser, setCreatingUser] = useState(false);
+  const [userPage, setUserPage] = useState(1);
+  const [userTotalCount, setUserTotalCount] = useState(0);
+  const USER_PAGE_SIZE = 20;
   const [newUser, setNewUser] = useState<NewUserForm>({
     username: '',
     password: '',
@@ -61,9 +67,16 @@ export default function AdminPortalPage() {
     roleId: 2,
   });
 
+  const loadUsers = async (p: number) => {
+    const res = await api.admin.users(p, USER_PAGE_SIZE);
+    setUsers(res.items);
+    setUserTotalCount(res.totalCount);
+    setUserPage(res.page);
+  };
+
   useEffect(() => {
-    Promise.all([api.impact.overview(), api.admin.users()])
-      .then(([o, u]) => { setOverview(o); setUsers(u); })
+    Promise.all([api.impact.overview(), api.admin.users(1, USER_PAGE_SIZE)])
+      .then(([o, res]) => { setOverview(o); setUsers(res.items); setUserTotalCount(res.totalCount); })
       .finally(() => setLoading(false));
   }, []);
 
@@ -128,8 +141,7 @@ export default function AdminPortalPage() {
         await api.admin.updateRole(registration.user.userId, newUser.roleId);
       }
 
-      const refreshedUsers = await api.admin.users();
-      setUsers(refreshedUsers);
+      await loadUsers(userPage);
       setNewUser({
         username: '',
         password: '',
@@ -359,6 +371,7 @@ export default function AdminPortalPage() {
             </tbody>
           </table>
         )}
+        <Pagination page={userPage} pageSize={USER_PAGE_SIZE} totalCount={userTotalCount} onPageChange={loadUsers} />
       </section>
     </main>
   );

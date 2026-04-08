@@ -80,9 +80,9 @@ public class AdminController : ControllerBase
     }
 
     [HttpGet("users")]
-    public async Task<ActionResult> GetUsers()
+    public async Task<ActionResult> GetUsers([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
     {
-        var users = await _db.Users
+        var query = _db.Users
             .Include(u => u.Role)
             .OrderBy(u => u.UserId)
             .Select(u => new
@@ -94,10 +94,15 @@ public class AdminController : ControllerBase
                 u.RoleId,
                 Role = u.Role!.Description,
                 u.NeedPasswordReset
-            })
+            });
+
+        var totalCount = await query.CountAsync();
+        var items = await query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync();
 
-        return Ok(users);
+        return Ok(new { items, totalCount, page, pageSize });
     }
 
     public record UpdateRoleRequest(int RoleId);

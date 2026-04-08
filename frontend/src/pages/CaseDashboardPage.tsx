@@ -5,10 +5,13 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import Modal from '../components/Modal';
 import type { Resident, AlertsData, Safehouse } from '../types/models';
 import { ExclamationTriangleIcon, MagnifyingGlassIcon, FunnelIcon, PlusIcon, PencilSquareIcon, ChevronDownIcon } from '@heroicons/react/24/solid';
+import Pagination from '../components/Pagination';
+import usePageTitle from '../hooks/usePageTitle';
 
 type Tab = 'sessions' | 'health' | 'education' | 'visits' | 'conferences' | 'notes';
 
 export default function CaseDashboardPage() {
+  usePageTitle('Resident Cases');
   const [residents, setResidents] = useState<Resident[]>([]);
   const [selected, setSelected] = useState<Resident | null>(null);
   const [alerts, setAlerts] = useState<AlertsData | null>(null);
@@ -20,10 +23,20 @@ export default function CaseDashboardPage() {
   const [riskFilter, setRiskFilter] = useState<string>('');
   const [safehouseFilter, setSafehouseFilter] = useState<string>('');
   const [safehouses, setSafehouses] = useState<Safehouse[]>([]);
+  const [page, setPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const PAGE_SIZE = 20;
+
+  const loadResidents = async (p: number) => {
+    const res = await api.residents.list(p, PAGE_SIZE);
+    setResidents(res.items);
+    setTotalCount(res.totalCount);
+    setPage(res.page);
+  };
 
   useEffect(() => {
-    Promise.all([api.residents.list(), api.residents.alerts(), api.safehouses.list()])
-      .then(([r, a, sh]) => { setResidents(r); setAlerts(a); setSafehouses(sh); })
+    Promise.all([api.residents.list(1, PAGE_SIZE), api.residents.alerts(), api.safehouses.list()])
+      .then(([res, a, sh]) => { setResidents(res.items); setTotalCount(res.totalCount); setAlerts(a); setSafehouses(sh); })
       .finally(() => setLoading(false));
   }, []);
 
@@ -215,6 +228,7 @@ export default function CaseDashboardPage() {
                 </li>
               ))}
             </ul>
+            <Pagination page={page} pageSize={PAGE_SIZE} totalCount={totalCount} onPageChange={loadResidents} />
           </div>
         </aside>
 

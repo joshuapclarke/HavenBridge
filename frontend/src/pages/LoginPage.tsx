@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { saveToken, parseToken } from '../services/auth';
 import PublicNav from '../components/PublicNav';
+import usePageTitle from '../hooks/usePageTitle';
 import PublicFooter from '../components/PublicFooter';
 import { CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/solid';
 
@@ -15,6 +16,7 @@ const PW_RULES = [
 ] as const;
 
 export default function LoginPage() {
+  usePageTitle('Sign In');
   const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');

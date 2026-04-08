@@ -5,8 +5,10 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import Modal from '../components/Modal';
 import type { Supporter, DonorImpact, PublicImpactSnapshot } from '../types/models';
 import { ArrowDownTrayIcon, ArrowPathIcon, GiftIcon, UserPlusIcon } from '@heroicons/react/24/outline';
+import usePageTitle from '../hooks/usePageTitle';
 
 export default function DonorPortalPage() {
+  usePageTitle('Donor Portal');
   const [donor, setDonor] = useState<Supporter | null>(null);
   const [impact, setImpact] = useState<DonorImpact | null>(null);
   const [snapshots, setSnapshots] = useState<PublicImpactSnapshot[]>([]);

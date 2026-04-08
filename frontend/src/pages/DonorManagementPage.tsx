@@ -5,6 +5,8 @@ import StatusBadge from '../components/StatusBadge';
 import LoadingSpinner from '../components/LoadingSpinner';
 import Modal from '../components/Modal';
 import type { Supporter, SupporterSummary, DonorImpact } from '../types/models';
+import Pagination from '../components/Pagination';
+import usePageTitle from '../hooks/usePageTitle';
 import {
   UserGroupIcon,
   UserIcon,
@@ -15,6 +17,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 export default function DonorManagementPage() {
+  usePageTitle('Donor Management');
   const [supporters, setSupporters] = useState<Supporter[]>([]);
   const [summary, setSummary] = useState<SupporterSummary | null>(null);
   const [selected, setSelected] = useState<Supporter | null>(null);
@@ -26,6 +29,9 @@ export default function DonorManagementPage() {
   const [editSupporterForm, setEditSupporterForm] = useState<Record<string, any>>({});
   const [newSupporter, setNewSupporter] = useState({ supporterType: 'Individual', firstName: '', lastName: '', displayName: '', organizationName: '', email: '', phone: '', country: 'Philippines', region: '', acquisitionChannel: 'Direct' });
   const [donationForm, setDonationForm] = useState({ donationType: 'Monetary', amount: 0, campaignName: '', currencyCode: 'PHP', isRecurring: false });
+  const [page, setPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const PAGE_SIZE = 20;
 
   const handleAddDonation = async () => {
     if (!selected) return;
@@ -87,10 +93,16 @@ export default function DonorManagementPage() {
     setSummary(sum);
   };
 
+  const loadSupporters = async (p: number) => {
+    const [res, sum] = await Promise.all([api.supporters.list(p, PAGE_SIZE), api.supporters.summary()]);
+    setSupporters(res.items);
+    setTotalCount(res.totalCount);
+    setPage(res.page);
+    setSummary(sum);
+  };
+
   useEffect(() => {
-    Promise.all([api.supporters.list(), api.supporters.summary()])
-      .then(([s, sum]) => { setSupporters(s); setSummary(sum); })
-      .finally(() => setLoading(false));
+    loadSupporters(1).finally(() => setLoading(false));
   }, []);
 
   const selectDonor = async (s: Supporter) => {
@@ -166,6 +178,7 @@ export default function DonorManagementPage() {
                 ))}
               </tbody>
             </table>
+            <Pagination page={page} pageSize={PAGE_SIZE} totalCount={totalCount} onPageChange={loadSupporters} />
           </div>
         </section>
 

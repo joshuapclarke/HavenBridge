@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { api } from '../services/api';
 import SummaryCard from '../components/SummaryCard';
 import LoadingSpinner from '../components/LoadingSpinner';
+import usePageTitle from '../hooks/usePageTitle';
 import PublicNav from '../components/PublicNav';
 import PublicFooter from '../components/PublicFooter';
 import type { ImpactOverview, PublicImpactSnapshot } from '../types/models';
@@ -33,6 +34,7 @@ export default function PublicImpactPage() {
   const [overview, setOverview] = useState<ImpactOverview | null>(null);
   const [snapshots, setSnapshots] = useState<PublicImpactSnapshot[]>([]);
   const [loading, setLoading] = useState(true);
+  usePageTitle('Our Impact');
 
   useEffect(() => {
     Promise.all([api.impact.overview(), api.impact.snapshots()])

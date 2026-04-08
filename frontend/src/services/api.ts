@@ -38,14 +38,14 @@ export const api = {
     createDonorProfile: () => request<{ token: string; supporterId: number }>('/auth/create-donor-profile', { method: 'POST' }),
   },
   residents: {
-    list: () => request<any[]>('/residents'),
+    list: (page = 1, pageSize = 20) => request<{ items: any[]; totalCount: number; page: number; pageSize: number }>(`/residents?page=${page}&pageSize=${pageSize}`),
     get: (id: number) => request<any>(`/residents/${id}`),
     create: (data: any) => request<any>('/residents', { method: 'POST', body: JSON.stringify(data) }),
     update: (id: number, data: any) => request<any>(`/residents/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     alerts: () => request<any>('/residents/alerts'),
   },
   supporters: {
-    list: () => request<any[]>('/supporters'),
+    list: (page = 1, pageSize = 20) => request<{ items: any[]; totalCount: number; page: number; pageSize: number }>(`/supporters?page=${page}&pageSize=${pageSize}`),
     get: (id: number) => request<any>(`/supporters/${id}`),
     create: (data: any) => request<any>('/supporters', { method: 'POST', body: JSON.stringify(data) }),
     update: (id: number, data: any) => request<any>(`/supporters/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
@@ -82,7 +82,7 @@ export const api = {
   admin: {
     recentActivity: () => request<any[]>('/admin/recent-activity'),
     search: (q: string) => request<any>(`/admin/search?q=${encodeURIComponent(q)}`),
-    users: () => request<any[]>('/admin/users'),
+    users: (page = 1, pageSize = 20) => request<{ items: any[]; totalCount: number; page: number; pageSize: number }>(`/admin/users?page=${page}&pageSize=${pageSize}`),
     createUser: (data: { username: string; password: string; roleId: number; firstName?: string; lastName?: string }) =>
       request<any>('/admin/users', { method: 'POST', body: JSON.stringify(data) }),
     deleteUser: (userId: number) =>
