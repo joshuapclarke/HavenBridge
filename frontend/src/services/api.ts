@@ -35,6 +35,7 @@ export const api = {
     changePassword: (data: { currentPassword: string; newPassword: string }) =>
       request<{ message: string }>('/auth/change-password', { method: 'POST', body: JSON.stringify(data) }),
     me: () => request<any>('/auth/me'),
+    createDonorProfile: () => request<{ token: string; supporterId: number }>('/auth/create-donor-profile', { method: 'POST' }),
   },
   residents: {
     list: () => request<any[]>('/residents'),

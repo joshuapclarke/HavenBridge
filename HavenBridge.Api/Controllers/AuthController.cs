@@ -156,6 +156,43 @@ public class AuthController : ControllerBase
     }
 
     [Authorize]
+    [HttpPost("create-donor-profile")]
+    public async Task<ActionResult> CreateDonorProfile()
+    {
+        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userIdClaim == null) return Unauthorized();
+
+        var user = await _db.Users.Include(u => u.Role).FirstOrDefaultAsync(u => u.UserId == int.Parse(userIdClaim));
+        if (user == null) return NotFound();
+        if (user.SupporterId.HasValue)
+            return Conflict(new { message = "Donor profile already exists." });
+
+        var displayName = string.Join(" ",
+            new[] { user.UserFirstName, user.UserLastName }.Where(s => !string.IsNullOrWhiteSpace(s)));
+        if (string.IsNullOrWhiteSpace(displayName))
+            displayName = user.Username;
+
+        var supporter = new Supporter
+        {
+            SupporterType = "Individual",
+            DisplayName = displayName,
+            FirstName = user.UserFirstName,
+            LastName = user.UserLastName,
+            Status = "Active",
+            AcquisitionChannel = "Self-Registration",
+            CreatedAt = DateTime.UtcNow
+        };
+        _db.Supporters.Add(supporter);
+        await _db.SaveChangesAsync();
+
+        user.SupporterId = supporter.SupporterId;
+        await _db.SaveChangesAsync();
+
+        var token = GenerateToken(user, user.Role!.Description);
+        return Ok(new { token, supporterId = supporter.SupporterId });
+    }
+
+    [Authorize]
     [HttpGet("me")]
     public async Task<ActionResult> Me()
     {

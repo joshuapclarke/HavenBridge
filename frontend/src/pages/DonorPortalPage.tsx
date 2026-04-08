@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import { api } from '../services/api';
-import { getSupporterId } from '../services/auth';
+import { getSupporterId, saveToken } from '../services/auth';
 import LoadingSpinner from '../components/LoadingSpinner';
 import Modal from '../components/Modal';
 import type { Supporter, DonorImpact, PublicImpactSnapshot } from '../types/models';
-import { ArrowDownTrayIcon, ArrowPathIcon, GiftIcon } from '@heroicons/react/24/outline';
+import { ArrowDownTrayIcon, ArrowPathIcon, GiftIcon, UserPlusIcon } from '@heroicons/react/24/outline';
 
 export default function DonorPortalPage() {
   const [donor, setDonor] = useState<Supporter | null>(null);
@@ -72,13 +72,39 @@ export default function DonorPortalPage() {
 
   if (loading) return <LoadingSpinner />;
 
+  const [creatingProfile, setCreatingProfile] = useState(false);
+
+  const handleCreateProfile = async () => {
+    setCreatingProfile(true);
+    try {
+      const { token, supporterId } = await api.auth.createDonorProfile();
+      saveToken(token);
+      setNoProfile(false);
+      setLoading(true);
+      await loadDonorData(supporterId);
+      setLoading(false);
+    } catch {
+      alert('Failed to create donor profile. Please try again.');
+    } finally {
+      setCreatingProfile(false);
+    }
+  };
+
   if (noProfile) {
     return (
       <div className="max-w-lg mx-auto px-6 py-20 text-center">
         <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-10">
-          <GiftIcon className="h-12 w-12 text-haven-400 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-gray-900 mb-2">No Donor Profile Linked</h2>
-          <p className="text-sm text-gray-500">Your account is not linked to a donor profile yet. If you registered recently, please sign out and sign back in to refresh your session.</p>
+          <UserPlusIcon className="h-12 w-12 text-haven-400 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Set Up Your Donor Profile</h2>
+          <p className="text-sm text-gray-500 mb-6">Create your donor profile to start tracking your giving history and impact.</p>
+          <button
+            onClick={handleCreateProfile}
+            disabled={creatingProfile}
+            className="inline-flex items-center gap-2 px-6 py-3 bg-haven-600 text-white font-semibold rounded-xl hover:bg-haven-700 transition-all shadow-sm hover:shadow-md disabled:opacity-60"
+          >
+            <UserPlusIcon className="h-5 w-5" />
+            {creatingProfile ? 'Creating...' : 'Create My Profile'}
+          </button>
         </div>
       </div>
     );
