@@ -77,6 +77,7 @@ export const api = {
     charts: () => request<any>('/reports/charts'),
     annual: (year: number) => request<any>(`/reports/annual/${year}`),
     upcomingConferences: () => request<any[]>('/reports/upcoming-conferences'),
+    mlPipelines: () => request<{ pipelines: any[] }>('/reports/ml-pipelines'),
   },
   admin: {
     recentActivity: () => request<any[]>('/admin/recent-activity'),

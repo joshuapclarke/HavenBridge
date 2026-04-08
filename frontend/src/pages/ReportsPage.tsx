@@ -40,6 +40,14 @@ interface ChartData {
   reintegrationByStatus: { status: string; count: number }[];
 }
 
+interface MlPipelineSummary {
+  id: string;
+  title: string;
+  objective: string;
+  keyMetrics: string[];
+  insights: string[];
+}
+
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 const PIE_COLORS = ['#4f6d7a', '#c0d6df', '#db6d3c', '#dbc49c', '#8b5e3c', '#6b9080', '#a4c3b2', '#cce3de'];
@@ -71,6 +79,7 @@ export default function ReportsPage() {
   const [supporterSummary, setSupporterSummary] = useState<SupporterSummary | null>(null);
   const [alerts, setAlerts] = useState<AlertsData | null>(null);
   const [charts, setCharts] = useState<ChartData | null>(null);
+  const [mlPipelines, setMlPipelines] = useState<MlPipelineSummary[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -80,13 +89,15 @@ export default function ReportsPage() {
       api.supporters.summary(),
       api.residents.alerts(),
       api.reports.charts(),
+      api.reports.mlPipelines(),
     ])
-      .then(([ov, sh, sup, al, ch]) => {
+      .then(([ov, sh, sup, al, ch, ml]) => {
         setOverview(ov as ImpactOverview);
         setSafehouses((Array.isArray(sh) ? sh : []).map((row) => normalizeSafehouse(row as Record<string, unknown>)));
         setSupporterSummary(sup as SupporterSummary);
         setAlerts(al as AlertsData);
         setCharts(ch as ChartData);
+        setMlPipelines(Array.isArray(ml?.pipelines) ? (ml.pipelines as MlPipelineSummary[]) : []);
       })
       .finally(() => setLoading(false));
   }, []);
@@ -170,6 +181,43 @@ export default function ReportsPage() {
           <SummaryCard title="Total Donations" value={`$${Number(overview.totalDonations).toLocaleString()}`} icon={<CurrencyDollarIcon className="h-7 w-7" />} accent="border-emerald-500" />
         </div>
       )}
+
+      {/* ML Pipelines */}
+      <section aria-label="Machine learning pipeline outputs" className="mb-12">
+        <h2 className="text-xl font-bold text-gray-900 tracking-tight mb-5">ML Pipeline Results</h2>
+        {mlPipelines.length === 0 ? (
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 text-sm text-gray-500">
+            No ML pipeline summaries available.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            {mlPipelines.map((pipeline) => (
+              <article key={pipeline.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+                <h3 className="text-lg font-semibold text-gray-900">{pipeline.title}</h3>
+                <p className="text-sm text-gray-600 mt-2">{pipeline.objective}</p>
+
+                <div className="mt-4">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Key Metrics</p>
+                  <ul className="mt-2 space-y-1 text-sm text-gray-700">
+                    {pipeline.keyMetrics.map((metric) => (
+                      <li key={metric}>- {metric}</li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="mt-4">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Insights</p>
+                  <ul className="mt-2 space-y-1 text-sm text-gray-700">
+                    {pipeline.insights.map((insight) => (
+                      <li key={insight}>- {insight}</li>
+                    ))}
+                  </ul>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
 
       {/* Charts Row 1: Donations & Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">

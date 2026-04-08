@@ -258,4 +258,121 @@ public class ReportsController : ControllerBase
             incidents = new { total = incidents, resolved = resolvedIncidents }
         });
     }
+
+    [HttpGet("ml-pipelines")]
+    public ActionResult GetMlPipelineSummaries()
+    {
+        var pipelines = new[]
+        {
+            new
+            {
+                id = "social-media-donation-predictor",
+                title = "Social Media Donation Predictor",
+                objective = "Predict donation-driving posts and estimate referral/value lift from social content.",
+                keyMetrics = new[]
+                {
+                    "AUC-ROC: 0.970",
+                    "Donation Count RMSE: 20.037",
+                    "Donation Count MAE: 6.493",
+                    "Donation Count R²: 0.628",
+                    "Donation Value RMSE: 79,034.51 PHP",
+                    "Donation Value MAE: 29,379.50 PHP",
+                    "Donation Value R²: 0.508",
+                    "Cross-val Mean RMSE: 19.729 (+/- 12.438)"
+                },
+                insights = new[]
+                {
+                    "Top feature importance analysis completed for donation-driving content.",
+                    "Model supports both classification (drives donations) and regression (count/value)."
+                }
+            },
+            new
+            {
+                id = "donor-churn",
+                title = "Donor Churn Classifier",
+                objective = "Identify donors likely to churn so staff can intervene with retention outreach.",
+                keyMetrics = new[]
+                {
+                    "Threshold tuned to 0.25 for higher churn recall",
+                    "Classification report generated with imbalance-aware setup"
+                },
+                insights = new[]
+                {
+                    "Pipeline prioritizes finding at-risk donors over raw accuracy.",
+                    "Configured for scalability as donor history grows."
+                }
+            },
+            new
+            {
+                id = "reintegration-readiness",
+                title = "Reintegration Readiness Model",
+                objective = "Score resident readiness for reintegration and support safer discharge decisions.",
+                keyMetrics = new[]
+                {
+                    "AUC-ROC: 1.000",
+                    "Cross-validation AUC-ROC: [0.96875, 1.00000, 0.96875, 0.84375, 0.81250]",
+                    "Mean AUC-ROC: 0.919 (+/- 0.151)"
+                },
+                insights = new[]
+                {
+                    "Ranks top drivers across health, education, intervention, and incident history.",
+                    "Outputs readiness score and predicted reintegration status."
+                }
+            },
+            new
+            {
+                id = "resident-risk-classifier",
+                title = "Resident Risk Classifier",
+                objective = "Classify resident risk level to prioritize casework and intervention planning.",
+                keyMetrics = new[]
+                {
+                    "Cross-validation F1 scores: [0.537, 0.587, 0.587, 0.660, 0.313]",
+                    "Mean F1: 0.537 (+/- 0.237)"
+                },
+                insights = new[]
+                {
+                    "Top risk predictors extracted for caseworker guidance.",
+                    "Designed to handle imbalanced multi-class risk outcomes."
+                }
+            },
+            new
+            {
+                id = "intervention-effectiveness",
+                title = "Intervention Effectiveness Model",
+                objective = "Estimate probability that an intervention plan leads to resident progress.",
+                keyMetrics = new[]
+                {
+                    "AUC-ROC: 1.000",
+                    "Top intervention lift analysis generated"
+                },
+                insights = new[]
+                {
+                    "Highlights interventions with strongest progress impact.",
+                    "Provides probability-oriented decision support for plan selection."
+                }
+            },
+            new
+            {
+                id = "donor-lifetime-value",
+                title = "Donor Lifetime Value Model",
+                objective = "Forecast donor value and identify high-value donor segments for stewardship.",
+                keyMetrics = new[]
+                {
+                    "RMSE: 2,497.48 PHP",
+                    "MAE: 1,516.06 PHP",
+                    "R²: 0.564",
+                    "Gradient Boosting R²: 0.565",
+                    "Gradient Boosting RMSE: 2,494.75 PHP",
+                    "High-value donor AUC-ROC: 1.000"
+                },
+                insights = new[]
+                {
+                    "Feature importance surfaced for both value regression and high-value classification.",
+                    "Supports prioritization of donor relationship investments."
+                }
+            }
+        };
+
+        return Ok(new { pipelines });
+    }
 }
