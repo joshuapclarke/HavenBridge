@@ -117,15 +117,19 @@ export default function AdminPortalPage() {
 
     setCreatingUser(true);
     try {
-      const created = await api.admin.createUser({
+      const registration = await api.auth.register({
         username: newUser.username.trim(),
         password: newUser.password,
-        roleId: newUser.roleId,
         firstName: newUser.firstName.trim() || undefined,
         lastName: newUser.lastName.trim() || undefined,
       });
 
-      setUsers(prev => [...prev, created]);
+      if (newUser.roleId !== 3) {
+        await api.admin.updateRole(registration.user.userId, newUser.roleId);
+      }
+
+      const refreshedUsers = await api.admin.users();
+      setUsers(refreshedUsers);
       setNewUser({
         username: '',
         password: '',
