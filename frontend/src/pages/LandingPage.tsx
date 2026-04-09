@@ -7,9 +7,12 @@ import {
   ArrowRightIcon,
   Bars3Icon,
   XMarkIcon,
+  SunIcon,
+  MoonIcon,
 } from '@heroicons/react/24/outline';
 import { getToken, getUserName, hasRole } from '../services/auth';
 import usePageTitle from '../hooks/usePageTitle';
+import { useTheme } from '../hooks/useTheme';
 
 const HERO_IMAGE =
   'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=80&auto=format&fit=crop';
@@ -17,6 +20,7 @@ const HERO_IMAGE =
 export default function LandingPage() {
   usePageTitle('Home');
   const [menuOpen, setMenuOpen] = useState(false);
+  const { theme, toggleTheme } = useTheme();
   const isLoggedIn = !!getToken();
   const username = isLoggedIn ? getUserName() : null;
   const dashboardPath = hasRole('Staff') ? '/dashboard' : '/donor-portal';
@@ -71,6 +75,15 @@ export default function LandingPage() {
                 </Link>
               </>
             )}
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="p-2 rounded-lg text-white/80 hover:bg-white/15 transition-all"
+              aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+              title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {theme === 'dark' ? <SunIcon className="h-5 w-5" /> : <MoonIcon className="h-5 w-5" />}
+            </button>
           </div>
 
           <button
@@ -106,6 +119,14 @@ export default function LandingPage() {
                 </Link>
               </>
             )}
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="flex items-center gap-2 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-white/90 hover:bg-white/10 transition-all mt-1"
+            >
+              {theme === 'dark' ? <SunIcon className="h-5 w-5 shrink-0" /> : <MoonIcon className="h-5 w-5 shrink-0" />}
+              {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+            </button>
           </div>
         )}
       </nav>
