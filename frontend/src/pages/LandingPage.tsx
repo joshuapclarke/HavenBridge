@@ -42,6 +42,7 @@ export default function LandingPage() {
             </Link>
             <Link
               to="/privacy"
+              state={{ from: '/welcome' }}
               className="text-sm font-medium text-white/90 hover:text-white transition-colors"
             >
               Privacy
@@ -88,7 +89,7 @@ export default function LandingPage() {
             <Link to="/impact" onClick={() => setMenuOpen(false)} className="block px-3 py-2.5 rounded-lg text-sm font-medium text-white/90 hover:bg-white/10 transition-colors">
               Our Impact
             </Link>
-            <Link to="/privacy" onClick={() => setMenuOpen(false)} className="block px-3 py-2.5 rounded-lg text-sm font-medium text-white/90 hover:bg-white/10 transition-colors">
+            <Link to="/privacy" state={{ from: '/welcome' }} onClick={() => setMenuOpen(false)} className="block px-3 py-2.5 rounded-lg text-sm font-medium text-white/90 hover:bg-white/10 transition-colors">
               Privacy
             </Link>
             {isLoggedIn ? (
@@ -231,7 +232,7 @@ export default function LandingPage() {
           </div>
           <div className="flex items-center gap-6 text-sm text-gray-500">
             <Link to="/impact" className="hover:text-gray-900 transition-colors">Impact</Link>
-            <Link to="/privacy" className="hover:text-gray-900 transition-colors">Privacy</Link>
+            <Link to="/privacy" state={{ from: '/welcome' }} className="hover:text-gray-900 transition-colors">Privacy</Link>
             {isLoggedIn ? (
               <Link to={dashboardPath} className="hover:text-gray-900 transition-colors">{username ?? 'My Account'}</Link>
             ) : (

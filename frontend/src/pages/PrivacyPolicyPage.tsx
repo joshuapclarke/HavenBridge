@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { ArrowLeftIcon, ShieldCheckIcon } from '@heroicons/react/24/outline';
 import PublicNav from '../components/PublicNav';
 import PublicFooter from '../components/PublicFooter';
@@ -10,7 +10,11 @@ const LAST_UPDATED = 'April 6, 2026';
 export default function PrivacyPolicyPage() {
   usePageTitle('Privacy Policy');
   const authed = isAuthenticated();
-  const backTo = authed ? (hasRole('Staff') ? '/dashboard' : '/donor-portal') : '/welcome';
+  const location = useLocation();
+  const fromState = (location.state as { from?: string })?.from;
+  const defaultBack = authed ? (hasRole('Staff') ? '/dashboard' : '/donor-portal') : '/welcome';
+  const backTo = fromState ?? defaultBack;
+  const backLabel = backTo === '/welcome' ? 'Back to home' : authed ? 'Back to dashboard' : 'Back to home';
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-50 to-white">
@@ -22,7 +26,7 @@ export default function PrivacyPolicyPage() {
           className="inline-flex items-center gap-2 text-sm font-medium text-haven-700 hover:text-haven-900 transition-colors rounded-md mb-8"
         >
           <ArrowLeftIcon className="h-4 w-4" aria-hidden />
-          {authed ? 'Back to dashboard' : 'Back to home'}
+          {backLabel}
         </Link>
 
         <article className="bg-white rounded-3xl shadow-sm border border-gray-100 px-6 sm:px-10 py-10 sm:py-12">
@@ -118,7 +122,7 @@ export default function PrivacyPolicyPage() {
 
           <p className="mt-12 pt-8 border-t border-gray-100 text-center">
             <Link to={backTo} className="text-haven-600 hover:text-haven-700 font-medium text-sm transition-colors">
-              {authed ? 'Back to dashboard' : 'Back to home'}
+              {backLabel}
             </Link>
           </p>
         </article>
