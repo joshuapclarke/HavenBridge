@@ -38,6 +38,9 @@ public class User
     [Column("need_password_reset")]
     public bool NeedPasswordReset { get; set; }
 
+    [Column("is_mfa_enabled")]
+    public bool IsMfaEnabled { get; set; } = false;
+
     [ForeignKey(nameof(RoleId))]
     public Role? Role { get; set; }
 
