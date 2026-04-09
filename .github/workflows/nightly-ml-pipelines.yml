@@ -1,0 +1,77 @@
+name: Nightly ML Pipelines
+
+on:
+  schedule:
+    # Runs nightly at 06:00 UTC
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+jobs:
+  run-ml-pipelines:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install notebook dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install jupyter nbconvert papermill pandas numpy scikit-learn matplotlib seaborn joblib
+
+      # Staggered/sequential execution to avoid running all pipelines simultaneously
+      - name: Run social-media-donation-predictor
+        run: |
+          papermill "ml-pipelines/social-media-donation-predictor.ipynb" "ml-pipelines/out/social-media-donation-predictor.executed.ipynb"
+
+      - name: Pause before next pipeline
+        run: sleep 90
+
+      - name: Run donor_churn
+        run: |
+          papermill "ml-pipelines/donor_churn.ipynb" "ml-pipelines/out/donor_churn.executed.ipynb"
+
+      - name: Pause before next pipeline
+        run: sleep 90
+
+      - name: Run donor-lifetime-value
+        run: |
+          papermill "ml-pipelines/donor-lifetime-value.ipynb" "ml-pipelines/out/donor-lifetime-value.executed.ipynb"
+
+      - name: Pause before next pipeline
+        run: sleep 90
+
+      - name: Run resident-risk-classifier
+        run: |
+          papermill "ml-pipelines/resident-risk-classifier.ipynb" "ml-pipelines/out/resident-risk-classifier.executed.ipynb"
+
+      - name: Pause before next pipeline
+        run: sleep 90
+
+      - name: Run reintegration-readiness
+        run: |
+          papermill "ml-pipelines/reintegration-readiness.ipynb" "ml-pipelines/out/reintegration-readiness.executed.ipynb"
+
+      - name: Pause before next pipeline
+        run: sleep 90
+
+      - name: Run intervention-effectiveness
+        run: |
+          papermill "ml-pipelines/intervention-effectiveness.ipynb" "ml-pipelines/out/intervention-effectiveness.executed.ipynb"
+
+      - name: Upload executed notebooks and model artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-ml-results-${{ github.run_number }}
+          path: |
+            ml-pipelines/out/*.executed.ipynb
+            ml-pipelines/*.pkl
+          if-no-files-found: warn
+          retention-days: 14
