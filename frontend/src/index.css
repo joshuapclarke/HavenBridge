@@ -92,6 +92,31 @@ body {
 .dark .hover\:bg-gray-100:hover {
   background-color: var(--color-gray-700, #374151) !important;
 }
+/* Page-level light backgrounds */
+.dark .bg-rose-50\/40 {
+  background-color: var(--color-gray-950, #030712) !important;
+}
+.dark .bg-gray-50 {
+  background-color: var(--color-gray-950, #030712) !important;
+}
+.dark .from-haven-50 {
+  --tw-gradient-from: var(--color-gray-900, #111827) !important;
+}
+.dark .via-white {
+  --tw-gradient-via: var(--color-gray-900, #111827) !important;
+}
+.dark .to-gray-100 {
+  --tw-gradient-to: var(--color-gray-900, #111827) !important;
+}
+.dark .from-gray-50 {
+  --tw-gradient-from: var(--color-gray-950, #030712) !important;
+}
+.dark .bg-haven-100\/40 {
+  background-color: rgb(77 11 49 / 0.3) !important;
+}
+.dark .bg-haven-50\/40 {
+  background-color: rgb(77 11 49 / 0.2) !important;
+}
 .dark input, .dark select, .dark textarea {
   background-color: var(--color-gray-800, #1f2937) !important;
   border-color: var(--color-gray-700, #374151) !important;

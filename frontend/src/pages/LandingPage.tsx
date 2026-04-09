@@ -26,7 +26,7 @@ export default function LandingPage() {
   const dashboardPath = hasRole('Staff') ? '/dashboard' : '/donor-portal';
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-950">
       {/* ─── Navbar ─── */}
       <nav className="absolute top-0 left-0 right-0 z-20 px-6 py-5">
         <div className="mx-auto max-w-6xl flex items-center justify-between">
@@ -171,7 +171,7 @@ export default function LandingPage() {
         </div>
 
         {/* Soft fade into content */}
-        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-gray-50 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-gray-50 dark:from-gray-950 to-transparent" />
       </header>
 
       {/* ─── Mission Cards ─── */}
