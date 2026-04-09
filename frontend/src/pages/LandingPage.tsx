@@ -231,8 +231,8 @@ export default function LandingPage() {
             <span className="font-semibold text-gray-900">HavenBridge</span>
           </div>
           <div className="flex items-center gap-6 text-sm text-gray-500">
-            <Link to="/impact" className="hover:text-gray-900 transition-colors">Impact</Link>
-            <Link to="/privacy" state={{ from: '/welcome' }} className="hover:text-gray-900 transition-colors">Privacy</Link>
+            <Link to="/impact" className="hover:text-gray-900 transition-colors">Our Impact</Link>
+            <Link to="/privacy" state={{ from: '/welcome' }} className="hover:text-gray-900 transition-colors">Privacy Policy</Link>
             {isLoggedIn ? (
               <Link to={dashboardPath} className="hover:text-gray-900 transition-colors">{username ?? 'My Account'}</Link>
             ) : (
