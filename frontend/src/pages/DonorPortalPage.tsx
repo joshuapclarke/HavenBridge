@@ -4,7 +4,7 @@ import { getSupporterId, saveToken } from '../services/auth';
 import LoadingSpinner from '../components/LoadingSpinner';
 import Modal from '../components/Modal';
 import type { Supporter, DonorImpact, PublicImpactSnapshot } from '../types/models';
-import { ArrowDownTrayIcon, ArrowPathIcon, GiftIcon, UserPlusIcon } from '@heroicons/react/24/outline';
+import { GiftIcon, UserPlusIcon } from '@heroicons/react/24/outline';
 import usePageTitle from '../hooks/usePageTitle';
 
 const currencySymbol: Record<string, string> = { USD: '$', PHP: '₱', SGD: 'S$', CAD: 'C$' };
@@ -280,16 +280,6 @@ export default function DonorPortalPage() {
               <GiftIcon className="h-5 w-5" />
               Donate Again
             </button>
-            <button className="w-full flex items-center justify-center gap-2 border border-gray-200 text-gray-700 font-medium py-3.5 rounded-2xl hover:bg-gray-50 transition-all">
-              <ArrowDownTrayIcon className="h-5 w-5" />
-              Download Receipt
-            </button>
-            {isRecurring && (
-              <button className="w-full flex items-center justify-center gap-2 border border-haven-200 text-haven-700 font-medium py-3.5 rounded-2xl hover:bg-haven-50 transition-all">
-                <ArrowPathIcon className="h-5 w-5" />
-                Update Monthly Gift
-              </button>
-            )}
           </div>
         </div>
       </div>
