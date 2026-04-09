@@ -22,6 +22,7 @@ export default function DonorPortalPage() {
   const [donateLoading, setDonateLoading] = useState(false);
   const [donateSuccess, setDonateSuccess] = useState(false);
   const [creatingProfile, setCreatingProfile] = useState(false);
+  const [profileForm, setProfileForm] = useState({ email: '', phone: '', region: '', country: '' });
 
   const loadDonorData = async (supporterId: number) => {
     const [d, imp, snaps] = await Promise.all([
@@ -77,10 +78,17 @@ export default function DonorPortalPage() {
 
   if (loading) return <LoadingSpinner />;
 
-  const handleCreateProfile = async () => {
+  const handleCreateProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
     setCreatingProfile(true);
     try {
-      const { token, supporterId } = await api.auth.createDonorProfile();
+      const payload = {
+        email: profileForm.email || undefined,
+        phone: profileForm.phone || undefined,
+        region: profileForm.region || undefined,
+        country: profileForm.country || undefined,
+      };
+      const { token, supporterId } = await api.auth.createDonorProfile(payload);
       saveToken(token);
       setNoProfile(false);
       setLoading(true);
@@ -94,20 +102,41 @@ export default function DonorPortalPage() {
   };
 
   if (noProfile) {
+    const inputClass = 'w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-haven-500/20 focus:border-haven-500 outline-none transition-all';
     return (
-      <div className="max-w-lg mx-auto px-6 py-20 text-center">
-        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-10">
+      <div className="max-w-md mx-auto px-6 py-16">
+        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 sm:p-10">
           <UserPlusIcon className="h-12 w-12 text-haven-400 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Set Up Your Donor Profile</h2>
-          <p className="text-sm text-gray-500 mb-6">Create your donor profile to start tracking your giving history and impact.</p>
-          <button
-            onClick={handleCreateProfile}
-            disabled={creatingProfile}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-haven-600 text-white font-semibold rounded-xl hover:bg-haven-700 transition-all shadow-sm hover:shadow-md disabled:opacity-60"
-          >
-            <UserPlusIcon className="h-5 w-5" />
-            {creatingProfile ? 'Creating...' : 'Create My Profile'}
-          </button>
+          <h2 className="text-xl font-bold text-gray-900 mb-1 text-center">Set Up Your Donor Profile</h2>
+          <p className="text-sm text-gray-500 mb-6 text-center">Tell us a bit about yourself so we can personalize your experience. All fields are optional.</p>
+          <form onSubmit={handleCreateProfile} className="space-y-4">
+            <div>
+              <label htmlFor="profile-email" className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
+              <input id="profile-email" type="email" value={profileForm.email} onChange={e => setProfileForm(f => ({ ...f, email: e.target.value }))} className={inputClass} placeholder="you@example.com" />
+            </div>
+            <div>
+              <label htmlFor="profile-phone" className="block text-sm font-medium text-gray-700 mb-1.5">Phone</label>
+              <input id="profile-phone" type="tel" value={profileForm.phone} onChange={e => setProfileForm(f => ({ ...f, phone: e.target.value }))} className={inputClass} placeholder="+1 (555) 123-4567" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label htmlFor="profile-region" className="block text-sm font-medium text-gray-700 mb-1.5">Region</label>
+                <input id="profile-region" value={profileForm.region} onChange={e => setProfileForm(f => ({ ...f, region: e.target.value }))} className={inputClass} placeholder="e.g. Visayas" />
+              </div>
+              <div>
+                <label htmlFor="profile-country" className="block text-sm font-medium text-gray-700 mb-1.5">Country</label>
+                <input id="profile-country" value={profileForm.country} onChange={e => setProfileForm(f => ({ ...f, country: e.target.value }))} className={inputClass} placeholder="e.g. Philippines" />
+              </div>
+            </div>
+            <button
+              type="submit"
+              disabled={creatingProfile}
+              className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 bg-haven-600 text-white font-semibold rounded-xl hover:bg-haven-700 transition-all shadow-sm hover:shadow-md disabled:opacity-60 mt-2"
+            >
+              <UserPlusIcon className="h-5 w-5" />
+              {creatingProfile ? 'Creating...' : 'Create My Profile'}
+            </button>
+          </form>
         </div>
       </div>
     );

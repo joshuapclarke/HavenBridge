@@ -155,9 +155,11 @@ public class AuthController : ControllerBase
         return Ok(new { message = "Password changed successfully." });
     }
 
+    public record CreateDonorProfileRequest(string? Email, string? Phone, string? Region, string? Country);
+
     [Authorize]
     [HttpPost("create-donor-profile")]
-    public async Task<ActionResult> CreateDonorProfile()
+    public async Task<ActionResult> CreateDonorProfile([FromBody] CreateDonorProfileRequest? req)
     {
         var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (userIdClaim == null) return Unauthorized();
@@ -178,6 +180,10 @@ public class AuthController : ControllerBase
             DisplayName = displayName,
             FirstName = user.UserFirstName,
             LastName = user.UserLastName,
+            Email = req?.Email?.Trim(),
+            Phone = req?.Phone?.Trim(),
+            Region = req?.Region?.Trim(),
+            Country = req?.Country?.Trim(),
             Status = "Active",
             AcquisitionChannel = "Self-Registration",
             CreatedAt = DateTime.UtcNow

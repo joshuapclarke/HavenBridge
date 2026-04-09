@@ -35,7 +35,8 @@ export const api = {
     changePassword: (data: { currentPassword: string; newPassword: string }) =>
       request<{ message: string }>('/auth/change-password', { method: 'POST', body: JSON.stringify(data) }),
     me: () => request<any>('/auth/me'),
-    createDonorProfile: () => request<{ token: string; supporterId: number }>('/auth/create-donor-profile', { method: 'POST' }),
+    createDonorProfile: (data?: { email?: string; phone?: string; region?: string; country?: string }) =>
+      request<{ token: string; supporterId: number }>('/auth/create-donor-profile', { method: 'POST', body: JSON.stringify(data ?? {}) }),
   },
   residents: {
     list: (page = 1, pageSize = 20) => request<{ items: any[]; totalCount: number; page: number; pageSize: number }>(`/residents?page=${page}&pageSize=${pageSize}`),
