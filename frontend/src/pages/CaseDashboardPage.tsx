@@ -66,7 +66,7 @@ export default function CaseDashboardPage() {
     const detail = await api.residents.get(selected.residentId);
     setSelected(detail);
     setShowSessionForm(false);
-    setSessionForm({ sessionDate: new Date().toISOString().split('T')[0], sessionType: 'Individual', sessionDurationMinutes: 60, emotionalStateObserved: '', emotionalStateEnd: '', sessionNarrative: '', interventionsApplied: '', followUpActions: '' });
+    setSessionForm({ sessionDate: new Date().toISOString().split('T')[0], sessionType: 'Individual', sessionDurationMinutes: 60, socialWorker: '', emotionalStateObserved: '', emotionalStateEnd: '', sessionNarrative: '', interventionsApplied: '', followUpActions: '' });
   };
 
   const handleAddVisit = async () => {
