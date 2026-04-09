@@ -94,8 +94,22 @@ export default function CaseDashboardPage() {
       currentRiskLevel: selected.currentRiskLevel ?? 'Low',
       assignedSocialWorker: selected.assignedSocialWorker ?? '',
       caseCategory: selected.caseCategory ?? '',
-      presentAge: selected.presentAge ?? '',
-      safehouseId: selected.safehouseId ?? '',
+      sex: selected.sex ?? 'F',
+      placeOfBirth: selected.placeOfBirth ?? '',
+      religion: selected.religion ?? '',
+      isPwd: selected.isPwd ?? false,
+      pwdType: selected.pwdType ?? '',
+      hasSpecialNeeds: selected.hasSpecialNeeds ?? false,
+      specialNeedsDiagnosis: selected.specialNeedsDiagnosis ?? '',
+      familyIs4Ps: selected.familyIs4Ps ?? false,
+      familySoloParent: selected.familySoloParent ?? false,
+      familyIndigenous: selected.familyIndigenous ?? false,
+      familyParentPwd: selected.familyParentPwd ?? false,
+      familyInformalSettler: selected.familyInformalSettler ?? false,
+      referralSource: selected.referralSource ?? '',
+      referringAgencyPerson: selected.referringAgencyPerson ?? '',
+      reintegrationType: selected.reintegrationType ?? '',
+      reintegrationStatus: selected.reintegrationStatus ?? '',
     });
     setShowEditForm(true);
   };
@@ -787,7 +801,7 @@ export default function CaseDashboardPage() {
       </Modal>
 
       <Modal open={showEditForm} onClose={() => setShowEditForm(false)} title="Edit Resident Profile">
-        <div className="space-y-4">
+        <div className="space-y-5 max-h-[70vh] overflow-y-auto pr-1">
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Case Status</label>
@@ -802,20 +816,99 @@ export default function CaseDashboardPage() {
               </select>
             </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Case Category</label>
-            <select value={editForm.caseCategory ?? ''} onChange={e => setEditForm(f => ({ ...f, caseCategory: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-haven-500/20 focus:border-haven-500 outline-none transition-all">
-              <option>Neglect</option><option>Abandonment</option><option>Physical Abuse</option><option>Sexual Abuse</option><option>Exploitation</option><option>Trafficking</option><option>Other</option>
-            </select>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Case Category</label>
+              <select value={editForm.caseCategory ?? ''} onChange={e => setEditForm(f => ({ ...f, caseCategory: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-haven-500/20 focus:border-haven-500 outline-none transition-all">
+                <option>Neglect</option><option>Abandonment</option><option>Physical Abuse</option><option>Sexual Abuse</option><option>Exploitation</option><option>Trafficking</option><option>Other</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Sex</label>
+              <select value={editForm.sex ?? ''} onChange={e => setEditForm(f => ({ ...f, sex: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-haven-500/20 focus:border-haven-500 outline-none transition-all">
+                <option value="F">Female</option><option value="M">Male</option>
+              </select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Place of Birth</label>
+              <input value={editForm.placeOfBirth ?? ''} onChange={e => setEditForm(f => ({ ...f, placeOfBirth: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-haven-500/20 focus:border-haven-500 outline-none transition-all" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Religion</label>
+              <input value={editForm.religion ?? ''} onChange={e => setEditForm(f => ({ ...f, religion: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-haven-500/20 focus:border-haven-500 outline-none transition-all" />
+            </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Assigned Social Worker</label>
             <input value={editForm.assignedSocialWorker ?? ''} onChange={e => setEditForm(f => ({ ...f, assignedSocialWorker: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-haven-500/20 focus:border-haven-500 outline-none transition-all" />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Present Age</label>
-            <input type="number" value={editForm.presentAge ?? ''} onChange={e => setEditForm(f => ({ ...f, presentAge: +e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-haven-500/20 focus:border-haven-500 outline-none transition-all" />
+
+          <p className="text-sm font-medium text-gray-700">Disability & Special Needs</p>
+          <div className="flex gap-6">
+            <label className="flex items-center gap-2 text-sm text-gray-700">
+              <input type="checkbox" checked={editForm.isPwd ?? false} onChange={e => setEditForm(f => ({ ...f, isPwd: e.target.checked }))} className="rounded border-gray-300 text-haven-600 focus:ring-haven-500" />
+              PWD
+            </label>
+            <label className="flex items-center gap-2 text-sm text-gray-700">
+              <input type="checkbox" checked={editForm.hasSpecialNeeds ?? false} onChange={e => setEditForm(f => ({ ...f, hasSpecialNeeds: e.target.checked }))} className="rounded border-gray-300 text-haven-600 focus:ring-haven-500" />
+              Special Needs
+            </label>
           </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">PWD Type</label>
+              <input value={editForm.pwdType ?? ''} onChange={e => setEditForm(f => ({ ...f, pwdType: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-haven-500/20 focus:border-haven-500 outline-none transition-all" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Special Needs Diagnosis</label>
+              <input value={editForm.specialNeedsDiagnosis ?? ''} onChange={e => setEditForm(f => ({ ...f, specialNeedsDiagnosis: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-haven-500/20 focus:border-haven-500 outline-none transition-all" />
+            </div>
+          </div>
+
+          <p className="text-sm font-medium text-gray-700">Family Socio-Demographic Profile</p>
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              { key: 'familyIs4Ps', label: '4Ps Beneficiary' },
+              { key: 'familySoloParent', label: 'Solo Parent' },
+              { key: 'familyIndigenous', label: 'Indigenous Group' },
+              { key: 'familyParentPwd', label: 'Parent is PWD' },
+              { key: 'familyInformalSettler', label: 'Informal Settler' },
+            ].map(f => (
+              <label key={f.key} className="flex items-center gap-2 text-sm text-gray-700">
+                <input type="checkbox" checked={editForm[f.key] ?? false} onChange={e => setEditForm(prev => ({ ...prev, [f.key]: e.target.checked }))} className="rounded border-gray-300 text-haven-600 focus:ring-haven-500" />
+                {f.label}
+              </label>
+            ))}
+          </div>
+
+          <p className="text-sm font-medium text-gray-700">Referral & Reintegration</p>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Referral Source</label>
+              <select value={editForm.referralSource ?? ''} onChange={e => setEditForm(f => ({ ...f, referralSource: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-haven-500/20 focus:border-haven-500 outline-none transition-all">
+                <option value="">Select...</option><option>Government Agency</option><option>NGO</option><option>Police</option><option>Self-Referral</option><option>Community</option><option>Court Order</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Referring Person</label>
+              <input value={editForm.referringAgencyPerson ?? ''} onChange={e => setEditForm(f => ({ ...f, referringAgencyPerson: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-haven-500/20 focus:border-haven-500 outline-none transition-all" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Reintegration Type</label>
+              <select value={editForm.reintegrationType ?? ''} onChange={e => setEditForm(f => ({ ...f, reintegrationType: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-haven-500/20 focus:border-haven-500 outline-none transition-all">
+                <option value="">Select...</option><option>Family Reunification</option><option>Foster Care</option><option>Independent Living</option><option>Adoption</option><option>None</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Reintegration Status</label>
+              <select value={editForm.reintegrationStatus ?? ''} onChange={e => setEditForm(f => ({ ...f, reintegrationStatus: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-haven-500/20 focus:border-haven-500 outline-none transition-all">
+                <option value="">Select...</option><option>Not Started</option><option>In Progress</option><option>On Hold</option><option>Completed</option>
+              </select>
+            </div>
+          </div>
+
           <div className="flex justify-end gap-3 pt-2">
             <button onClick={() => setShowEditForm(false)} className="px-4 py-2.5 text-sm font-medium text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all">Cancel</button>
             <button onClick={handleEditSave} className="px-4 py-2.5 text-sm font-medium text-white bg-haven-600 rounded-xl hover:bg-haven-700 transition-all shadow-sm">Save Changes</button>

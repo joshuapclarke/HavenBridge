@@ -17,17 +17,39 @@ export const ResidentIntakeForm = () => {
   const [formData, setFormData] = useState<Partial<Resident>>({
     safehouseId: 0,
     caseControlNo: '',
+    sex: 'F',
     dateOfBirth: '',
+    birthStatus: '',
+    placeOfBirth: '',
+    religion: '',
     dateOfAdmission: new Date().toISOString().split('T')[0],
     caseCategory: 'Abandoned',
     initialRiskLevel: 'Medium',
     referralSource: '',
+    referringAgencyPerson: '',
     assignedSocialWorker: '',
     caseStatus: 'Active',
     subCatOrphaned: false,
     subCatPhysicalAbuse: false,
     subCatSexualAbuse: false,
     subCatTrafficked: false,
+    subCatChildLabor: false,
+    subCatOsaec: false,
+    subCatCicl: false,
+    subCatAtRisk: false,
+    subCatStreetChild: false,
+    subCatChildWithHiv: false,
+    isPwd: false,
+    pwdType: '',
+    hasSpecialNeeds: false,
+    specialNeedsDiagnosis: '',
+    familyIs4Ps: false,
+    familySoloParent: false,
+    familyIndigenous: false,
+    familyParentPwd: false,
+    familyInformalSettler: false,
+    reintegrationType: '',
+    reintegrationStatus: '',
   });
 
   useEffect(() => {
@@ -104,8 +126,28 @@ export const ResidentIntakeForm = () => {
               </select>
             </div>
             <div>
+              <label className={LABEL}>Sex</label>
+              <select name="sex" value={formData.sex} onChange={handleChange} className={INPUT}>
+                <option value="F">Female</option><option value="M">Male</option>
+              </select>
+            </div>
+            <div>
               <label className={LABEL}>Date of Birth *</label>
               <input required type="date" name="dateOfBirth" value={formData.dateOfBirth} onChange={handleChange} className={INPUT} />
+            </div>
+            <div>
+              <label className={LABEL}>Birth Status</label>
+              <select name="birthStatus" value={formData.birthStatus} onChange={handleChange} className={INPUT}>
+                <option value="">Select...</option><option>Marital</option><option>Non-Marital</option><option>Unknown</option>
+              </select>
+            </div>
+            <div>
+              <label className={LABEL}>Place of Birth</label>
+              <input type="text" name="placeOfBirth" value={formData.placeOfBirth} onChange={handleChange} className={INPUT} placeholder="e.g., Quezon City" />
+            </div>
+            <div>
+              <label className={LABEL}>Religion</label>
+              <input type="text" name="religion" value={formData.religion} onChange={handleChange} className={INPUT} placeholder="e.g., Roman Catholic" />
             </div>
             <div>
               <label className={LABEL}>Date of Admission *</label>
@@ -172,12 +214,98 @@ export const ResidentIntakeForm = () => {
                 { name: 'subCatPhysicalAbuse', label: 'Physical Abuse' },
                 { name: 'subCatSexualAbuse', label: 'Sexual Abuse' },
                 { name: 'subCatTrafficked', label: 'Trafficked' },
+                { name: 'subCatChildLabor', label: 'Child Labor' },
+                { name: 'subCatOsaec', label: 'OSAEC' },
+                { name: 'subCatCicl', label: 'CICL' },
+                { name: 'subCatAtRisk', label: 'At Risk' },
+                { name: 'subCatStreetChild', label: 'Street Child' },
+                { name: 'subCatChildWithHiv', label: 'Child with HIV' },
               ].map(cat => (
                 <label key={cat.name} className="flex items-center gap-2 text-sm text-gray-700">
                   <input type="checkbox" name={cat.name} checked={(formData as any)[cat.name] ?? false} onChange={handleChange} className="rounded border-gray-300 text-haven-600 focus:ring-haven-500" />
                   {cat.label}
                 </label>
               ))}
+            </div>
+          </div>
+
+          <div>
+            <label className={LABEL}>Referring Agency / Person</label>
+            <input type="text" name="referringAgencyPerson" value={formData.referringAgencyPerson} onChange={handleChange} className={INPUT} placeholder="e.g., Ana Cruz" />
+          </div>
+        </div>
+      </div>
+
+      {/* Disability & Special Needs */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="px-6 py-5 border-b border-gray-100">
+          <h2 className="font-semibold text-gray-900 text-lg">Disability & Special Needs</h2>
+        </div>
+        <div className="p-6 space-y-5">
+          <div className="flex gap-6">
+            <label className="flex items-center gap-2 text-sm text-gray-700">
+              <input type="checkbox" name="isPwd" checked={formData.isPwd ?? false} onChange={handleChange} className="rounded border-gray-300 text-haven-600 focus:ring-haven-500" />
+              Person with Disability (PWD)
+            </label>
+            <label className="flex items-center gap-2 text-sm text-gray-700">
+              <input type="checkbox" name="hasSpecialNeeds" checked={formData.hasSpecialNeeds ?? false} onChange={handleChange} className="rounded border-gray-300 text-haven-600 focus:ring-haven-500" />
+              Has Special Needs
+            </label>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div>
+              <label className={LABEL}>PWD Type</label>
+              <input type="text" name="pwdType" value={formData.pwdType} onChange={handleChange} className={INPUT} placeholder="e.g., Physical, Visual, Hearing" />
+            </div>
+            <div>
+              <label className={LABEL}>Special Needs Diagnosis</label>
+              <input type="text" name="specialNeedsDiagnosis" value={formData.specialNeedsDiagnosis} onChange={handleChange} className={INPUT} placeholder="e.g., Speech Impairment" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Family Socio-Demographic Profile */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="px-6 py-5 border-b border-gray-100">
+          <h2 className="font-semibold text-gray-900 text-lg">Family Socio-Demographic Profile</h2>
+        </div>
+        <div className="p-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 bg-gray-50/80 rounded-2xl border border-gray-100 p-5">
+            {[
+              { name: 'familyIs4Ps', label: '4Ps Beneficiary' },
+              { name: 'familySoloParent', label: 'Solo Parent' },
+              { name: 'familyIndigenous', label: 'Indigenous Group' },
+              { name: 'familyParentPwd', label: 'Parent is PWD' },
+              { name: 'familyInformalSettler', label: 'Informal Settler' },
+            ].map(f => (
+              <label key={f.name} className="flex items-center gap-2 text-sm text-gray-700">
+                <input type="checkbox" name={f.name} checked={(formData as any)[f.name] ?? false} onChange={handleChange} className="rounded border-gray-300 text-haven-600 focus:ring-haven-500" />
+                {f.label}
+              </label>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Reintegration */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="px-6 py-5 border-b border-gray-100">
+          <h2 className="font-semibold text-gray-900 text-lg">Reintegration</h2>
+        </div>
+        <div className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div>
+              <label className={LABEL}>Reintegration Type</label>
+              <select name="reintegrationType" value={formData.reintegrationType} onChange={handleChange} className={INPUT}>
+                <option value="">Select...</option><option>Family Reunification</option><option>Foster Care</option><option>Independent Living</option><option>Adoption</option><option>None</option>
+              </select>
+            </div>
+            <div>
+              <label className={LABEL}>Reintegration Status</label>
+              <select name="reintegrationStatus" value={formData.reintegrationStatus} onChange={handleChange} className={INPUT}>
+                <option value="">Select...</option><option>Not Started</option><option>In Progress</option><option>On Hold</option><option>Completed</option>
+              </select>
             </div>
           </div>
         </div>
