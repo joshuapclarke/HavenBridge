@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --color-haven-50: #fff4fb;
   --color-haven-100: #ffe8f6;
@@ -28,9 +30,73 @@
 body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   @apply bg-rose-50/40 text-gray-900 antialiased;
+  @apply dark:bg-gray-950 dark:text-gray-100;
 }
 
 ::selection {
   background: #ffd0ec;
   color: #4d0b31;
+}
+
+.dark ::selection {
+  background: #7b1d53;
+  color: #ffe8f6;
+}
+
+/* Dark mode surface overrides for white cards, tables, sections */
+.dark .bg-white {
+  background-color: var(--color-gray-900, #111827) !important;
+}
+.dark .bg-white\/80 {
+  background-color: rgb(17 24 39 / 0.8) !important;
+}
+.dark .border-gray-100 {
+  border-color: var(--color-gray-700, #374151) !important;
+}
+.dark .border-gray-200\/70 {
+  border-color: rgb(55 65 81 / 0.7) !important;
+}
+.dark .divide-gray-50 > :not(:last-child) {
+  border-color: var(--color-gray-800, #1f2937) !important;
+}
+.dark .bg-gray-50\/60 {
+  background-color: rgb(17 24 39 / 0.6) !important;
+}
+.dark .bg-gray-50\/80 {
+  background-color: rgb(31 41 55 / 0.8) !important;
+}
+.dark .text-gray-900 {
+  color: var(--color-gray-100, #f3f4f6) !important;
+}
+.dark .text-gray-700 {
+  color: var(--color-gray-300, #d1d5db) !important;
+}
+.dark .text-gray-600 {
+  color: var(--color-gray-400, #9ca3af) !important;
+}
+.dark .text-gray-500 {
+  color: var(--color-gray-400, #9ca3af) !important;
+}
+.dark .text-gray-400 {
+  color: var(--color-gray-500, #6b7280) !important;
+}
+.dark .bg-gray-50 {
+  background-color: var(--color-gray-800, #1f2937) !important;
+}
+.dark .bg-gray-100 {
+  background-color: var(--color-gray-800, #1f2937) !important;
+}
+.dark .hover\:bg-gray-50\/60:hover {
+  background-color: rgb(31 41 55 / 0.6) !important;
+}
+.dark .hover\:bg-gray-100:hover {
+  background-color: var(--color-gray-700, #374151) !important;
+}
+.dark input, .dark select, .dark textarea {
+  background-color: var(--color-gray-800, #1f2937) !important;
+  border-color: var(--color-gray-700, #374151) !important;
+  color: var(--color-gray-100, #f3f4f6) !important;
+}
+.dark input::placeholder, .dark textarea::placeholder {
+  color: var(--color-gray-500, #6b7280) !important;
 }
