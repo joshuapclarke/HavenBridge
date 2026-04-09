@@ -49,6 +49,8 @@ interface MlPipelineSummary {
   objective: string;
   keyMetrics: string[];
   insights: string[];
+  /** Pipeline-specific actions from API (grounded in ML notebook outputs). */
+  adminActions?: string[];
 }
 
 interface MlDisplaySummary {
@@ -153,45 +155,48 @@ function getSimpleMlSummary(pipeline: MlPipelineSummary): MlDisplaySummary {
   };
 }
 
-function getAdminActions(pipelineId: string): string[] {
+/** Fallback if API omits adminActions (older deployments). */
+function getAdminActionsFallback(pipelineId: string): string[] {
   const actions: Record<string, string[]> = {
     'social-media-donation-predictor': [
-      'Prioritize content types that historically convert to donations.',
-      'Increase posting budget for high-performing campaigns and reduce spend on low-performing ones.',
-      'Use weekly reviews to replicate posts with the strongest donation outcomes.',
+      'Prioritize saves, shares, and post-type mix over raw likes—the model weights those features highest for donation likelihood.',
+      'Do not optimize solely on engagement rate; notebook EDA shows only a weak link to donation referrals.',
+      'Lean into resident-story content and strong CTAs in formats that historically drove referrals.',
     ],
     'donor-churn': [
-      'Contact at-risk donors first with personalized follow-up within 7 days.',
-      'Launch retention campaigns (thank-you updates, impact stories, reminders) before donors lapse.',
-      'Track recovered donors monthly to improve outreach strategy over time.',
+      'Focus retention on repeat donors—frequency mattered more than gift size in the churn model’s feature importances.',
+      'Watch Word-of-Mouth channels more closely than Partner/Social acquisitions; EDA showed higher lapse rates there.',
+      'Treat low probability scores as “needs outreach,” not definite churn—the threshold is tuned for recall.',
     ],
     'reintegration-readiness': [
-      'Use readiness status to schedule case reviews and discharge planning checkpoints.',
-      'Focus support services on residents flagged as not yet ready before transition decisions.',
-      'Require supervisor approval for discharges when readiness confidence is low.',
+      'Clear documented follow-ups and maintain visit cadence before signing off on discharge—those features dominate readiness.',
+      'Hold transitions when health or nutrition trends stall even if administrative steps are done.',
     ],
     'resident-risk-classifier': [
-      'Move high-risk residents to the top of caseworker follow-up queues.',
-      'Assign additional counseling and home visit frequency for highest-risk profiles.',
-      'Review risk changes weekly so interventions can be adjusted early.',
+      'Act early on poor sleep, rising concerns, and rising incidents—the model ranks those near the top.',
+      'Protect longer counseling sessions for escalating cases; session depth surfaced as a driver.',
     ],
     'intervention-effectiveness': [
-      'Prioritize intervention plans with the strongest observed progress outcomes.',
-      'Phase out low-impact interventions unless required for compliance reasons.',
-      'Standardize successful interventions across safehouses with staff training.',
+      'Favor adequate session length and the session formats that the odds ratios flag as high-leverage.',
+      'Schedule heavier interventions when residents start in a positive emotional state when you can.',
     ],
     'donor-lifetime-value': [
-      'Prioritize relationship-building for donors with highest long-term value potential.',
-      'Offer tailored engagement plans (updates, events, stewardship) by donor value tier.',
-      'Shift acquisition budget toward channels that bring in the most valuable donors.',
+      'Steer acquisition toward channels with strongest average LTV in segmentation (e.g. social and church cohorts in the notebook).',
+      'Invest in monetary donors and volunteers before broad “advocate” tiers that showed lower high-value rates.',
     ],
   };
 
   return actions[pipelineId] ?? [
     'Use this model as a decision-support signal during weekly admin planning.',
-    'Prioritize follow-up actions on the highest-risk or highest-opportunity cases first.',
-    'Review outcomes monthly and update operating playbooks based on results.',
+    'Prioritize follow-up where the model highlights structural risk or opportunity.',
+    'Review outcomes quarterly and refresh playbooks when notebooks are re-run.',
   ];
+}
+
+function resolveAdminActions(pipeline: MlPipelineSummary): string[] {
+  if (Array.isArray(pipeline.adminActions) && pipeline.adminActions.length > 0)
+    return pipeline.adminActions;
+  return getAdminActionsFallback(pipeline.id);
 }
 
 export default function ReportsPage() {
@@ -373,7 +378,7 @@ export default function ReportsPage() {
                 <div className="mt-4">
                   <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Recommended actions for admins</p>
                   <ul className="mt-2 space-y-1 text-sm text-gray-700">
-                    {getAdminActions(pipeline.id).map((action) => (
+                    {resolveAdminActions(pipeline).map((action) => (
                       <li key={action}>- {action}</li>
                     ))}
                   </ul>

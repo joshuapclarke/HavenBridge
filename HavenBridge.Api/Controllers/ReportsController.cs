@@ -334,6 +334,13 @@ public class ReportsController : ControllerBase
                 {
                     "Top feature importance analysis completed for donation-driving content.",
                     "Model supports both classification (drives donations) and regression (count/value)."
+                },
+                adminActions = new[]
+                {
+                    "Prioritize formats and topics that earn saves and shares—Random Forest ranked shares, share rate, saves, and post type ahead of generic likes, so briefs should chase distribution (reshares) not vanity engagement alone.",
+                    "Treat high engagement rate with caution: in-pipeline EDA shows only a modest correlation with donation referrals, so do not let “most liked” posts dictate budget if they rarely convert.",
+                    "Double down on resident-story-led creative (the notebook segments ThankYou, EducationalContent, Photo/Video/Reel mix)—posts flagged with resident narratives historically lift donation referrals more than feed filler.",
+                    "Retarget paid/boost spend toward posts that already drive profile visits and click-throughs; those features sit in the top donation drivers alongside saves."
                 }
             },
             new
@@ -350,6 +357,13 @@ public class ReportsController : ControllerBase
                 {
                     "Pipeline prioritizes finding at-risk donors over raw accuracy.",
                     "Configured for scalability as donor history grows."
+                },
+                adminActions = new[]
+                {
+                    "Retention signal is stronger from donation frequency than from gift size—the notebook’s Random Forest and write-up emphasize `total_donations` over amount; design stewardship that secures a 2nd and 3rd gift, not only larger one-offs.",
+                    "Acquisition channel skews churn: historical EDA shows Word-of-Mouth lapsing more than Partner Referral or Social Media—invest in partner co-marketing and social funnels, and add proactive touchpoints for word-of-mouth donors before day 365.",
+                    "The model’s 0.25 probability threshold is tuned for recall—expect false alarms on the CRM dashboard; train staff to treat scores as “schedule a human check-in,” not automatic churn.",
+                    "Keep recency out of the training features by design (leakage prevention)—operational playbooks should still use plain “days since gift” for timing outreach even though the model score does not."
                 }
             },
             new
@@ -367,6 +381,12 @@ public class ReportsController : ControllerBase
                 {
                     "Ranks top drivers across health, education, intervention, and incident history.",
                     "Outputs readiness score and predicted reintegration status."
+                },
+                adminActions = new[]
+                {
+                    "Feature importance ranks follow-up workload and visit volume first—do not green-light discharge until outstanding follow-ups are cleared and home/case visits meet the cadence implied by high-readiness profiles.",
+                    "Health and nutrition trajectories (`avg_health_score`, `avg_nutrition`, trends) materially move the score—delay transition planning when biometric trends flatten or worsen even if paperwork looks complete.",
+                    "Safety concern counts and favorable-rate signals show up near the top—pair discharge reviews with a structured check that recent safety flags and progress trends align, not only a static checklist."
                 }
             },
             new
@@ -383,6 +403,12 @@ public class ReportsController : ControllerBase
                 {
                     "Top risk predictors extracted for caseworker guidance.",
                     "Designed to handle imbalanced multi-class risk outcomes."
+                },
+                adminActions = new[]
+                {
+                    "Sleep quality (`avg_sleep_score`) and unresolved concern counts are among the strongest lifts—escalate caseload when sleep metrics slip or concerns backlog before a formal risk label changes.",
+                    "Incident volume and in-progress intervention plans both rank highly—use the classifier to rebalance time toward residents bundling multiple open plans or rising incident counts.",
+                    "Session length and total sessions matter—ensure high-risk residents keep substantive counseling blocks rather than being squeezed into token check-ins."
                 }
             },
             new
@@ -399,6 +425,12 @@ public class ReportsController : ControllerBase
                 {
                     "Highlights interventions with strongest progress impact.",
                     "Provides probability-oriented decision support for plan selection."
+                },
+                adminActions = new[]
+                {
+                    "Logistic regression odds show session duration and session type dominate progress—protect longer one-to-one blocks for complex cases; the notebook summary notes group formats underperform for high-risk residents versus individual sessions.",
+                    "Residents who start sessions in a positive emotional frame see measurably better progress—where possible, schedule emotionally heavy interventions after stabilizing sessions or check-ins that improve mood.",
+                    "Match intervention class to the case plan deliberately—the pipeline is explanatory; use it to retire low-progress intervention mixes and standardize the combinations that repeatedly score well in session logs."
                 }
             },
             new
@@ -419,6 +451,13 @@ public class ReportsController : ControllerBase
                 {
                     "Feature importance surfaced for both value regression and high-value classification.",
                     "Supports prioritization of donor relationship investments."
+                },
+                adminActions = new[]
+                {
+                    "Segmentation output ranks Social Media and Church channels highest on average lifetime value—shift prospecting and matching gift asks toward those funnels before defaulting to cheapest lead sources.",
+                    "Monetary donors and volunteers show the strongest high-value rates versus social-media advocates or in-kind-only profiles—prioritize major-donor pipeline work and volunteer-to-donor conversion, not only follower growth.",
+                    "Website-acquired and word-of-mouth cohorts show the lowest hit-rate of high-value donors in the EDA tables—invest in onboarding journeys (welcome series, first 90 days) specifically for those two entry paths.",
+                    "Pair model tiers with behavior: the regressors emphasize monetary history and channel mix—use the scores to decide who receives executive touchpoints versus scalable digital stewardship."
                 }
             }
         };
